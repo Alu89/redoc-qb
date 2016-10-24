@@ -1,3 +1,3 @@
 #Description
 
-- Repo for the latex 
+- Repo that contain the report of the redoc-qb project. 
