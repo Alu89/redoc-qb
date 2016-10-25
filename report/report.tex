@@ -4,6 +4,7 @@
 
 \newcommand{\symb}{{symbols}}
 \newcommand{\signature}{{sign}}
+\newcommand{\comp}{{compilation}}
 
 \begin{document}
 
@@ -42,7 +43,7 @@
     Semantically checking last pushed versions of functions seems to be an
     interesting approach, we may have a look at it later.
 
-    \subsection{Naive approach}
+    \subsection{Naive approach}\label{naive-notations}
     We could simply try if there exists $(N, V, \_, \{\dots, B, \dots\} \in
     \mathcal{D}$ such that $L = B$.
 
@@ -54,7 +55,7 @@
     
     Answer: It would certainly be a bad idea\dots
 
-    \subsection{Second approach}
+    \subsection{Second approach}\label{approach-sign}
     Can we find a smarter way to compute $V(L,D)$ ?
 
     We could find a function $\signature$ such that $\signature(L) =
@@ -64,5 +65,60 @@
 
     Expected issues: since a new version is not that different from the former
     one, we do not know if we will obtain good results.
+
+    \subsection{Third approach}
+    We conclude in the previous part that it is not relevant to compare
+    binaries that are compiled differently. 
+
+    We will now work on distinguishing versions with the differences brought
+    by version patches.
+
+    % In the following we consider the same notations as in subsection~\ref{naive-notations}.
+
+    We have that $C$ is the source code of the version $V$ of library $N$,
+    i.e. $C$ could be openssl library sources, $V$ the major version $C'$ wich
+    is $1.0.0$ and
+    $N$ would be the name of the library, here it would be Openssl.
+
+    We have that $(C,V,N) \in \mathcal{D}$.
+
+    To check if $L$ is the library $N$ at the version $V$ we will expect the
+    following.
+
+    Let $P(C',C,V,N)$ be the $c$ code patching version from that major one to
+    the $V$ one.
+
+    Checking if the $c$ is handled by $L$ is not an easy problem. If we try
+    method based on simplified CFG to check similarities we would have the
+    same issues as in subsection~\ref{approach-sign}. Hence, we want to check
+    if the behaviour of patched function differs.
+
+    Basically we will check if the patched functions generate the same traces
+    as $L$ functions.
+
+    %TODO : comparer les signatures des fonctions pour discriminer des
+    %librairies
+
+    So we shifted the problem to a sub-problem that can decide the version of
+    $L$, which is: Is the function $f \in L$ is up to date considering $C$.
+
+    We will first consider dynamically linked libraries.
+
+    Procedure to check if $f \in L$, considering that $f \in \symb(C)$
+    First we automatically generate a $c$ code $P$ calling $f$ with random
+    parameters and catching/returning its behaviour. 
+    Second, we compile $P'$ dynamically linking $\comp(C)$ according to the
+    headers of $C$, we will note this compiled program $\comp(P')$. 
+    Third, we compile $P$ dynamically linking $L$ according to the headers of
+    $C$, we will note this compiled program $\comp(P)$. 
+    Last, we check the similarities of returns of $\comp(P)$ and $\comp(P')$
+    to decide.
+
+    \subsection{Expected optimizations}
+    We do not expect good result using only random testing. Hence, we will aid
+    testing by an analysis of the patch, finding specific traces to
+    distinguish when it is applied, we have yet to define details about this
+    part. 
+    Or we can do something similar to the concolic approach.
 
 \end{document}
