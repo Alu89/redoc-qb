@@ -28,13 +28,16 @@
 
     \subsection{Manual methods to look for a library version.}
     Finding some version numbers inside the binary file as data.
+    It works for openssl but not with zlib.
     Issue, it does not seem to be a standard practice.
 
     Looking for symbols in the file. 
+    Hypothesis: It returns the calls to the libs.
     Issue, it does not really help to get the version.
 
     Looking for version info function in the symbols of the file. Would
     probably work for zlib if we understood how this function works.
+    Example: In the Good..apk, a library calls or includes the function zlibVersion statically. This function returns the version number, but we were not able to retrieve it in the binary code of the function.
     
     Semantically checking last pushed versions of functions seems to be an
     interesting approach, we may have a look at it later.
@@ -52,7 +55,7 @@
     Answer: It would certainly be a bad idea\dots
 
     \subsection{Second approach}
-    Can we fine a smarter way to compute $V(L,D)$ ?
+    Can we find a smarter way to compute $V(L,D)$ ?
 
     We could find a function $\signature$ such that $\signature(L) =
     \signature(B)$.
