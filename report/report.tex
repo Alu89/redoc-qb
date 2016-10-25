@@ -1,0 +1,65 @@
+\documentclass{article}
+
+\usepackage{verbatim}
+
+\newcommand{\symb}{{symbols}}
+\newcommand{\signature}{{sign}}
+
+\begin{document}
+
+    This report is, at the moment, a draft reminding us the different steps we
+    considered (even trivially false ones) to reach our conclusions.
+
+   \section{Deciding version of a library used by a program.} 
+
+   \subsection{First try to define the problem.}
+
+   Let $\mathcal{D}$ a database of versionned libs to be set of $n$ tuples such that:
+    \[ \mathcal{D} = \{ (n_i, v_i, s_i, \mathcal{B}_i) \}_{\{i \in \{1 \dots n\}\}}  \]
+    where $n_i$ is the library name, $v_i$ a the library version, $s_i$ the source
+    code of the library, and $\mathcal{B}_i$ is the set of binary compiled
+    from the source code $s_i$. 
+
+    Let $L$ be a binary code of a library.
+
+    We want to find a function $V(L,D)$ such that if $L$ is compiled from a
+    source code $C$ and $(N, V, C, \_) \in \mathcal{D}$ then $V(L,D)$ returns
+    $(N,V)$.
+
+    \subsection{Manual methods to look for a library version.}
+    Finding some version numbers inside the binary file as data.
+    Issue, it does not seem to be a standard practice.
+
+    Looking for symbols in the file. 
+    Issue, it does not really help to get the version.
+
+    Looking for version info function in the symbols of the file. Would
+    probably work for zlib if we understood how this function works.
+    
+    Semantically checking last pushed versions of functions seems to be an
+    interesting approach, we may have a look at it later.
+
+    \subsection{Naive approach}
+    We could simply try if there exists $(N, V, \_, \{\dots, B, \dots\} \in
+    \mathcal{D}$ such that $L = B$.
+
+    But after some tests and look on the \verb|diff| of these binaries we
+    concluded that major differences can come from the compiling options,
+    compilers and related stuff.
+
+    Question: can we generate all possible compiled binaries in our database ? 
+    
+    Answer: It would certainly be a bad idea\dots
+
+    \subsection{Second approach}
+    Can we fine a smarter way to compute $V(L,D)$ ?
+
+    We could find a function $\signature$ such that $\signature(L) =
+    \signature(B)$.
+
+    We plan to reuse a signature function designed for malware.
+
+    Expected issues: since a new version is not that different from the former
+    one, we do not know if we will obtain good results.
+
+\end{document}
