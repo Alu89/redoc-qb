@@ -1,0 +1,21 @@
+#!/usr/bin/perl
+
+use File::Copy;
+use File::Find;
+
+
+sub mvHeaders {
+    my ($hdir, $ddir) = @_;
+
+    if (-d $ddir) { mkdir $ddir or die "$!"; }
+    find \&wanted, ($hdir) or die "$hdir: $!";
+    sub wanted {
+        my $file = shift;
+        if ($file =~ /\.h$/) {
+            copy "$hdir/$file", "$ddir/$file";
+        }
+    }
+}
+
+my ($hdir, $ddir) = @ARGV;
+mvHeaders $hdir, $ddir;
