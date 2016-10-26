@@ -64,37 +64,29 @@
     We plan to reuse a signature function designed for malware.
 
     Expected issues: since a new version is not that different from the former
-    one, we do not know if we will obtain good results.
+    one, we do not know if we will obtain good results. In the binary, differences between two versions may not be more important than differences between two different compilers, or optimisations.
 
     \subsection{Third approach}
-    We conclude in the previous part that it is not relevant to compare
-    binaries that are compiled differently. 
+    
+    %We conclude in the previous part that it is not relevant to compare  binaries that are compiled differently. 
 
     We will now work on distinguishing versions with the differences brought
     by version patches.
 
     % In the following we consider the same notations as in subsection~\ref{naive-notations}.
 
-    We have that $C$ is the source code of the version $V$ of library $N$,
-    i.e. $C$ could be openssl library sources, $V$ the major version $C'$ wich
-    is $1.0.0$ and
-    $N$ would be the name of the library, here it would be Openssl.
+    Let $C$ be the source code of the version $V$ of library $N$,
+    i.e. $C$ could be OpenSSL library sources, $V$ the version of $C$ which
+    is $1.0.0$ and $N$ could be the name of the library, here it would be OpenSSL.
 
-    We have that $(C,V,N) \in \mathcal{D}$.
+    Let $\mathcal{D}$ be a database containing several $3$-tuple $(C,V,N)$, and $P(C, C')$ be the $c$ code upgrading $C$ to $C'$
 
-    To check if $L$ is the library $N$ at the version $V$ we will expect the
-    following.
-
-    Let $P(C',C,V,N)$ be the $c$ code patching version from that major one to
-    the $V$ one.
-
-    Checking if the $c$ is handled by $L$ is not an easy problem. If we try
-    method based on simplified CFG to check similarities we would have the
-    same issues as in subsection~\ref{approach-sign}. Hence, we want to check
+    Checking if the $c$ is handled by $L$ is not trivial. Trying method based on simplified CFG to check similarities lead to the same issues as in subsection~\ref{approach-sign}. Hence, we want to check
     if the behaviour of patched function differs.
 
     Basically we will check if the patched functions generate the same traces
     as $L$ functions.
+
 
     %TODO : comparer les signatures des fonctions pour discriminer des
     %librairies
@@ -103,6 +95,8 @@
     $L$, which is: Is the function $f \in L$ is up to date considering $C$.
 
     We will first consider dynamically linked libraries.
+    
+    Different major versions have different signature functions. For example one function $f$ from OpenSSL 1.0.* and the same function $f$ from OpenSSL 1.1.* have different arguments, then it is possible to eliminate a lot of versions of OpenSSL for the library $L$. The limitation of this trick is that all the function in two different minor versions as OpenSSL 1.0.2.h and OpenSSL 1.0.2.j have the same signatures.
 
     Procedure to check if $f \in L$, considering that $f \in \symb(C)$
     First we automatically generate a $c$ code $P$ calling $f$ with random
