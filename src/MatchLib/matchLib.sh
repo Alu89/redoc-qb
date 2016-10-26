@@ -1,3 +1,3 @@
 pathBDD=../../sujet1/bdd/
 
-ls $pathBDD
+pathToTest=../../sujet1/
