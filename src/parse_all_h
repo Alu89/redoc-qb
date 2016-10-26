@@ -1,14 +1,15 @@
-#!/bin/perl
+#!/usr/bin/perl
 
 use v5.10;
 use threads;
 use threads::shared;
+use IO::Handle;
 
 my $target_dir = shift;
 my $MAX_THREADS = 4;
 
 # First we find headers files 
-my $find_command = "/bin/find $target_dir | grep -e '\\.h\$'";
+my $find_command = "/usr/bin/find $target_dir | grep -e '\\.h\$'";
 
 my $header_files;
 $header_files = `$find_command`;
@@ -27,7 +28,7 @@ my $j :shared;
 my $mutex_write :shared;
 
 $j = 0;
-for (my $i = 0; $i < 4; $i++)
+for (my $i = 0; $i < $MAX_THREADS; $i++)
 {
     push @jobs, threads->create(sub{
             my $run = 1;
@@ -44,18 +45,17 @@ for (my $i = 0; $i < 4; $i++)
                     }
                 }
                 if($run){
-                    my $command = "/bin/perl cscan --lazy --get parsed_fdecls $file";
+                    my $command = "/usr/bin/perl cscan --lazy --get parsed_fdecls $file";
                     my $xml = `$command`;
 
-                    if (!(substr($xml, 0, 1) eq "<")) {$xml = ''; }
-                    else{
-                        my $ind = index($xml, "\n");
-                        $xml = truncate($xml, $ind);
-                    }
+                    my $ind = index($xml, ">") + 1;
+                    $xml = substr($xml, $ind, (length $xml) - $ind);
+
                     say "Writing...";
                     {
                         lock($mutex_write);
-                        print $fh $stripped_xml;
+                        print $fh $xml;
+                        $fh->flush();
                     }
                     say "Parsing $file: done.";
                 }
