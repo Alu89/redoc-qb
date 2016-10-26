@@ -1,0 +1,69 @@
+#!/bin/perl
+
+use v5.10;
+use threads;
+use threads::shared;
+
+my $target_dir = shift;
+my $MAX_THREADS = 4;
+
+# First we find headers files 
+my $find_command = "/bin/find $target_dir | grep -e '\\.h\$'";
+
+my $header_files;
+$header_files = `$find_command`;
+my @hfiles = split /\s/, $header_files;
+pop @hfiles;
+my $nbfiles = $#hfiles;
+say "$nbfiles files to parse.";
+
+my @jobs;
+
+open($fh, ">output.xml") or die "cannot open output file"; 
+
+say $fh "<root>";
+
+my $j :shared;
+my $mutex_write :shared;
+
+$j = 0;
+for (my $i = 0; $i < 4; $i++)
+{
+    push @jobs, threads->create(sub{
+            my $run = 1;
+            while($run)
+            {
+                my $file;
+                {
+                    lock($j);
+                    if ($j > $#hfiles){ $run = 0; }
+                    else{
+                        $file = $hfiles[$j];
+                        $j++;
+                        say "--$j -> $file--";
+                    }
+                }
+                if($run){
+                    my $command = "/bin/perl cscan --lazy --get parsed_fdecls $file";
+                    my $xml = `$command`;
+
+                    if (!(substr($xml, 0, 1) eq "<")) {$xml = ''; }
+                    else{
+                        my $ind = index($xml, "\n");
+                        $xml = truncate($xml, $ind);
+                    }
+                    say "Writing...";
+                    {
+                        lock($mutex_write);
+                        print $fh $stripped_xml;
+                    }
+                    say "Parsing $file: done.";
+                }
+            }
+        });
+}
+
+$_->join for @jobs;
+say $fh "</root>";
+
+
