@@ -4,6 +4,8 @@ use v5.10;
 use threads;
 use threads::shared;
 use IO::Handle;
+use XML::Simple;
+use Data::Dumper;
 
 my $target_dir = shift;
 my $MAX_THREADS = 4;
@@ -65,5 +67,24 @@ for (my $i = 0; $i < $MAX_THREADS; $i++)
 
 $_->join for @jobs;
 say $fh "</root>";
+
+close($fh);
+
+my $config = XMLin("output.xml");
+
+$fdecl = $config->{'fdecl'};
+
+$tc = "";
+for $file (@hfiles) {
+    $tc .= "#include \"$file\"\n"
+}
+$tc .= "main(){";
+foreach $k (keys %$fdecl) {
+    $tc .= "$k;";
+}
+$tc .= "}";
+say $tc;
+
+
 
 
