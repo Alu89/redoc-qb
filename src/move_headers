@@ -29,7 +29,7 @@ my ($lib) = @ARGV;
 
 
 $dirSrc = "../sujet1/srcLib/$lib/";
-$strconfig = "configure";
+$strconfig = "config shared";
 
 chdir $dirSrc;
 opendir(my $dirSrc2, "./");
@@ -65,11 +65,14 @@ for my $file (@files) {
 
         $args = "./$strconfig $hid";
         say $args;
+        say `pwd`;
         system($args) == 0 or say "Config error ! $!";
         $pwd = `pwd`;
         chomp $pwd;
         #mvHeaders "$pwd/", "$pwd/../../../bdd/$lib/$file/headers/" ;
-		$findCMD = "find $pwd | grep -e \"\\.h\$\"";
+        say $pwd;
+        
+		$findCMD = "find $pwd/include | grep -e \"\\.h\$\"";
 
 		my $findOUT = `$findCMD`;
 		my @findOUTArray = split /\s/, $findOUT;
@@ -80,6 +83,7 @@ for my $file (@files) {
 		for my $line (@findOUTArray){	
 		
  			say "ON COPIE $line DANS $pwd/../../../bdd/$lib/$file/headers/";
+ 			`mkdir $pwd/../../../bdd/$lib/$file/headers`;
  			copy $line, "$pwd/../../../bdd/$lib/$file/headers/";
         
         }	
