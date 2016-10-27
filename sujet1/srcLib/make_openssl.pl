@@ -76,13 +76,12 @@ for my $line (@findOUTArray){
 }
 
 
+
+say "Cleaning all";
 closedir $dir;
 chdir $dir;
 opendir(my $dir, "./");
 my @files = readdir $dir;
-
-
-
 for my $file (@files) {
 	say $file;
     if ($file =~ /.*\.tar\.gz/){}
