@@ -1,8 +1,4 @@
 <root>
-
-
-
-
 <fdecl type="int" id="CRYPTO_mem_ctrl" text="int CRYPTO_mem_ctrl(int mode)" file="openssl-1.0.2h/include/openssl/crypto.h">
   <args>
     <arg type="int" id="mode" text="int mode" mod=""/>

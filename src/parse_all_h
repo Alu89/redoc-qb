@@ -40,11 +40,13 @@ for (my $i = 0; $i < $MAX_THREADS; $i++)
                 {
                     lock($j);
                     if ($j > $#hfiles){ $run = 0; }
+		    
                     else{
                         $file = $hfiles[$j];
                         $j++;
                         say "--$j -> $file--";
                     }
+		
                 }
                 if($run){
                     my $command = "/usr/bin/perl cscan --lazy --get parsed_fdecls $file";
@@ -52,7 +54,7 @@ for (my $i = 0; $i < $MAX_THREADS; $i++)
 
                     my $ind = index($xml, ">") + 1;
                     $xml = substr($xml, $ind, (length $xml) - $ind);
-
+		    
                     say "Writing...";
                     {
                         lock($mutex_write);
@@ -60,6 +62,7 @@ for (my $i = 0; $i < $MAX_THREADS; $i++)
                         $fh->flush();
                     }
                     say "Parsing $file: done.";
+			$run = 0;
                 }
             }
         });
@@ -76,16 +79,41 @@ $fdecl = $config->{'fdecl'};
 
 $tc = "";
 for $file (@hfiles) {
-    $tc .= "#include \"$file\"\n"
+    @name = split(/\//, $file);
+    $tc .= "#include \"$name[$#name]\"\n"
 }
 $tc .= "main(){";
+
+
 foreach $k (keys %$fdecl) {
-    $tc .= "$k;";
+    $args = $fdecl->{$k}->{'args'}{'arg'};
+
+    print Dumper($args);
+    print Dumper( $fdecl->{$k});
+    $tc .= "$k(";
+    $toto = 0;
+    foreach $kk (keys %$args){
+	say $kk;
+	if($kk eq "text"){
+		$tc .= "NULL";
+		last;
+	}
+
+	if($toto != 0){
+		$tc.= ", ";	
+	}
+  	$tc .= "NULL";
+	$toto = 1;
+  }
+    $tc .= ");\n";
 }
 $tc .= "}";
 
 open my $test, ">", "test.c";
 print $test $tc;
+$cmd = "cp test.c ../sujet1/bdd/openssl/openssl-1.0.2h/test.c";
+`$cmd`;
+
 
 
 
