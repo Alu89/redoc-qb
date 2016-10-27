@@ -6,21 +6,43 @@ use File::Copy::Recursive qw(dircopy);
 use File::Copy;
 use Data::Dumper;
 
-
 sub isLib {
     my ($libInDB) = @_;
 
-    $cmd = "gcc $libInDB->{test} -L$libInDB->{tmpDir} -I$libInDB->{hDir}
-    $libInDB->{compopt}";
-    return (system($cmd) == 0);
+    $cmd = "gcc $libInDB->{test} -L$libInDB->{tmpDir} -I$libInDB->{hDir} $libInDB->{compopt}";
+    say $cmd;
+    #return (system($cmd) == 0);
 }
 
 
-sub genTmpDir {
+sub genTmpDir { 
     my ($libToCheck, $libToReplace, $libInDB) = @_;
 
-    dircopy $libInDB->{soDir},$libInDB->{tmpDir} or die "$!";
+    dircopy $libInDB->{soDir},$libInDB->{tmpDir} or die "$libInDB->{soDir}: $!";
     copy $libToCheck, "$libInDB->{tmpDir}/$libToReplace";
+}
+
+
+sub genEntry {
+    my ($folder) = @_;
+    my %libToCreate;
+
+    open my $name, "<", "$folder/name.txt" or die "$!";
+    $libToCreate{name} = <$name>;
+    close $name;
+
+    open my $version, "<", "$folder/version.txt" or die "$!";
+    $libToCreate{version} = <$version>;
+    close $version;
+
+    $libToCreate{hDir} = "$folder/headers";
+    $libToCreate{soDir} = "$folder/so";
+    $libToCreate{tmpDir} = "$folder/tmp";
+    $libToCreate{test} = "$folder/test.c";
+
+    if (!(-d $libToCreate{tmpDir})) { mkdir $libToCreate{tmpDir}; }
+
+    return \%libToCreate;
 }
 
 
@@ -35,15 +57,22 @@ my %libStored = (
 );
 
 
-if ($#ARGV + 1 != 1) {die "Wrong parameters";}
-my ($lib) = @ARGV;
+my $NumberOfMandatoryParameters = 2;
+if ($#ARGV + 1 != $NumberOfMandatoryParameters) {die "Wrong parameters";}
+my ($libToCheck, $folderLibDB) = @ARGV;
 
 
-opendir my $dir, $libStored{soDir} or die "$!";
+my $libDB = genEntry $folderLibDB;
+say Dumper($libDB);
+# say Dumper(\%libStored);
+
+opendir my $dir, $libDB->{soDir} or die "$!";
 while(my $file = readdir $dir) {
-    genTmpDir $lib, $file, %libStored; 
-    if(isLib %libStored) {
-        say "Youhou !";
+    if ($file =~ /\.so$/){
+        genTmpDir $lib, $file, $libDB; 
+        if(isLib $libDB) {
+            say "Youhou !";
+        }
     }
 }
 close $dir;
