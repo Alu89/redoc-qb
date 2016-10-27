@@ -83,7 +83,9 @@ foreach $k (keys %$fdecl) {
     $tc .= "$k;";
 }
 $tc .= "}";
-say $tc;
+
+open my $test, ">", "test.c";
+print $test $tc;
 
 
 
