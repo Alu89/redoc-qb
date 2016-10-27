@@ -8,7 +8,7 @@ use XML::Simple;
 use Data::Dumper;
 
 my $target_dir = shift;
-my $MAX_THREADS = 4;
+my $MAX_THREADS = 3;
 
 # First we find headers files 
 my $find_command = "/usr/bin/find $target_dir | grep -e '\\.h\$'";
@@ -62,7 +62,6 @@ for (my $i = 0; $i < $MAX_THREADS; $i++)
                         $fh->flush();
                     }
                     say "Parsing $file: done.";
-			$run = 0;
                 }
             }
         });
@@ -73,46 +72,46 @@ say $fh "</root>";
 
 close($fh);
 
-my $config = XMLin("output.xml");
-
-$fdecl = $config->{'fdecl'};
-
-$tc = "";
-for $file (@hfiles) {
-    @name = split(/\//, $file);
-    $tc .= "#include \"$name[$#name]\"\n"
-}
-$tc .= "main(){";
-
-
-foreach $k (keys %$fdecl) {
-    $args = $fdecl->{$k}->{'args'}{'arg'};
-
-    print Dumper($args);
-    print Dumper( $fdecl->{$k});
-    $tc .= "$k(";
-    $toto = 0;
-    foreach $kk (keys %$args){
-	say $kk;
-	if($kk eq "text"){
-		$tc .= "NULL";
-		last;
-	}
-
-	if($toto != 0){
-		$tc.= ", ";	
-	}
-  	$tc .= "NULL";
-	$toto = 1;
-  }
-    $tc .= ");\n";
-}
-$tc .= "}";
-
-open my $test, ">", "test.c";
-print $test $tc;
-$cmd = "cp test.c ../sujet1/bdd/openssl/openssl-1.0.2h/test.c";
-`$cmd`;
+#my $config = XMLin("output.xml");
+#
+#$fdecl = $config->{'fdecl'};
+#
+#$tc = "";
+#for $file (@hfiles) {
+#    @name = split(/\//, $file);
+#    $tc .= "#include \"$name[$#name]\"\n"
+#}
+#$tc .= "main(){";
+#
+#
+#foreach $k (keys %$fdecl) {
+#    $args = $fdecl->{$k}->{'args'}{'arg'};
+#
+#    #print Dumper($args);
+#    #print Dumper( $fdecl->{$k});
+#    $tc .= "$k(";
+#    $toto = 0;
+#    foreach $kk (keys %$args){
+#	say $kk;
+#	if($kk eq "text"){
+#		$tc .= "NULL";
+#		last;
+#	}
+#
+#	if($toto != 0){
+#		$tc.= ", ";	
+#	}
+#  	$tc .= "NULL";
+#	$toto = 1;
+#  }
+#    $tc .= ");\n";
+#}
+#$tc .= "}";
+#
+#open my $test, ">", "test.c";
+#print $test $tc;
+##$cmd = "cp test.c ../sujet1/bdd/openssl/openssl-1.0.2h/test.c";
+##`$cmd`;
 
 
 
