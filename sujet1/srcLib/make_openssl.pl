@@ -10,8 +10,6 @@ chdir $dir;
 if (0){
 my @files = readdir $dir;
 
-
-
 my $args;
 my $hid = "> /dev/null 2> /dev/null";
 for my $file (@files) {
@@ -26,9 +24,6 @@ for my $file (@files) {
 closedir $dir;
 
 
-opendir(my $dir, './');
-
-my @files = readdir $dir;
 opendir(my $dir, './');
 my @files = readdir $dir;
 for my $file (@files) {	
