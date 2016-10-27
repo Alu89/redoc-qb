@@ -7,8 +7,6 @@ opendir(my $dir, $lib);
 
 chdir $dir;
 
-
-my @files = readdir $dir;
 opendir(my $dir, './');
 my @files = readdir $dir;
 for my $file (@files) {	
@@ -43,7 +41,7 @@ my $findOUT = `$findCMD`;
 my @findOUTArray = split /\s/, $findOUT;
 
 
-say "cp all";
+say "cp all .so";
 for my $line (@findOUTArray){	
 
 	my @version = split /\//, $line;
@@ -55,3 +53,23 @@ for my $line (@findOUTArray){
 	}
 	`cp $line $pathToCp`
 }
+
+
+opendir(my $dir, $lib);
+my @files = readdir $dir;
+for my $file (@files) {	
+	say $file;
+	
+    if (-d $file) {
+        say "Cleaning $file...";
+		$mfile=$file;
+        opendir(my $openssldir, $mfile) or die "Failed to open $mfile $!";
+        chdir $openssldir;
+		say `pwd`;
+        $args = "make clean";
+        say $args;
+        system($args) == 0 or say "Clean error ! $!";	
+    }
+}
+
+
