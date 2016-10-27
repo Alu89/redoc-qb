@@ -7,15 +7,19 @@ use File::Find;
 sub mvHeaders {
     my ($hdir, $ddir) = @_;
 
-    if (-d $ddir) { mkdir $ddir or die "$!"; }
-    find \&wanted, ($hdir) or die "$hdir: $!";
+    if (!(-d $ddir)) { mkdir $ddir or die "$!"; }
+
     sub wanted {
-        my $file = shift;
-        if ($file =~ /\.h$/) {
-            copy "$hdir/$file", "$ddir/$file";
+        if (/\.h$/) {
+            copy $_,$ddir or die "cpy: $!";
         }
     }
+    find \&wanted, $hdir or die "$hdir: $!";
+    #my @tab = split(/\s/, `find $hdir`);
+    #while(<@tab>) { print "|$_|"; wanted $_; }
+    
 }
 
 my ($hdir, $ddir) = @ARGV;
+
 mvHeaders $hdir, $ddir;
