@@ -1,0 +1,49 @@
+#!/usr/bin/perl
+
+use v5.10;
+
+use File::Copy::Recursive qw(dircopy);
+use File::Copy;
+use Data::Dumper;
+
+
+sub isLib {
+    my ($libInDB) = @_;
+
+    $cmd = "gcc $libInDB->{test} -L$libInDB->{tmpDir} -I$libInDB->{hDir}
+    $libInDB->{compopt}";
+    return (system($cmd) == 0);
+}
+
+
+sub genTmpDir {
+    my ($libToCheck, $libToReplace, $libInDB) = @_;
+
+    dircopy $libInDB->{soDir},$libInDB->{tmpDir} or die "$!";
+    copy $libToCheck, "$libInDB->{tmpDir}/$libToReplace";
+}
+
+
+my %libStored = (
+    name => 'openssl',
+    version => 1.0.0,
+    compopt => '-lwouhou',
+    test => './test.c', 
+    soDir => './so', 
+    tmpDir => './tmp',
+    hDir => './headers'
+);
+
+
+if ($#ARGV + 1 != 1) {die "Wrong parameters";}
+my ($lib) = @ARGV;
+
+
+opendir my $dir, $libStored{soDir} or die "$!";
+while(my $file = readdir $dir) {
+    genTmpDir $lib, $file, %libStored; 
+    if(isLib %libStored) {
+        say "Youhou !";
+    }
+}
+close $dir;
