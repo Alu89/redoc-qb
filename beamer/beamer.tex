@@ -59,198 +59,125 @@ Robin}}
     \end{block}
 
     \end{frame}
+
 \begin{frame}
-    \begin{block}{Problem}
+    \frametitle{Use your hands} 
+    \begin{block}{Strings}
+        We use the strings command to check for infos in binary.
+    \end{block}
+    \includegraphics[scale=0.5]{strings.png}
+    \begin{block}{Other methods}
+       We do not know any... But pros do.
+    \end{block}
+    Is there any pro here ? 
+\end{frame}
+
+
+\begin{frame}
+    \frametitle{Overview - How to check if we applied a patch ?}
+   
+    \begin{block}{What do we have ?}
         \begin{itemize}
-            \item How do we know if a library is patched ?  
-            \item How to check if we applied a patch ?
+            \item An unknown .so library, $L$ ;
+            \item A set of known libraries sources, $S$.
         \end{itemize}
     \end{block}
-   
 
-    Let L be the library
-        En entree on a une librairie binaire en .so et on va repondre a la
-        question: Quelle est la version de cette librairie?
+    \begin{center}
+        \includegraphics[scale=0.3]{bdd.png} 
+    \end{center}
 
-        Du coup on nous donne un .so 
-        Et on a pleiun de sources de librairies connues
-
-        Dans la suite on va considerer que la librairie binaire a ete compilee
-        dans la meme architecture que notre machine 
+    \begin{block}{What are we doing ?}
+        For all library $s$ in $S$, we check if $L$ is of the same version as $s$.
+    \end{block}
 \end{frame}
 
 
 \begin{frame}
+    \frametitle{Lazy start}
 
-    Approche naive, on compile nos librairies et les compare bit par bit avec
-    L
-
-    Probleme: L est compile avec un compilateur different et des options de
-    ocmpilations differentes.
-
-    Les binaires sont trop differents, meme si ils font potentiellement la
-    meme chose.
+    
+    \begin{block}{}
+        \begin{itemize}
+            \item Compile libraries in $S$, $c_1, \dots, c_n$ ; 
+            \item Compare bit by bit $L$ and $c_1, \dots, c_n$.
+        \end{itemize}
+    \end{block}
+    \begin{center}
+    \includegraphics[scale=0.2]{compillib.png}
+        \hspace{5em}
+    \includegraphics[scale=0.2]{compbin.png}
+    \end{center}
+    \begin{block}{}
+        $L$ is compiled with a \underline{different compiler} and \underline{different
+        compiling options}.
+    \end{block}
 
 \end{frame}
 
 \begin{frame}
+    \frametitle{Be smarter}
 
-    Il faut trouver des methodes plus intelligentes pour comparer les
-    binaires.
-
+    \begin{block}{}
     \begin{itemize}
-        \item Linkage 
-        \item Malware signature
-        \item Traces
+        \item Link compatibility ;
+        \item Malware signature ;
+        \item Traces.
     \end{itemize}
+    \end{block}
+    \begin{center}
+        \includegraphics[scale=0.2]{link.png}
+    \includegraphics[scale=0.4]{malware.jpeg}
+    \includegraphics[scale=0.05]{cfg.png}
+    \end{center}
 
 \end{frame}
 
 \begin{frame}
     \frametitle{Link dynamically the library}
-    blabla  
+    \includegraphics[scale=0.38]{compil1.png}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Link dynamically the library}
+    \includegraphics[scale=0.38]{compil2.png}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Turnkey programs} 
+    \begin{block}{Build a DB}
+        \begin{itemize}
+            \item Semi-auto-compiling libraries ;
+            \item Semi-auto-extracting headers ;
+            \item Auto-generation of a c program to link-test libraries ;
+        \end{itemize}
+    \end{block}
+    \begin{block}{Executable}
+         \begin{itemize}
+                \item Checking major version of a library with link-testing. 
+         \end{itemize}
+    \end{block}
+    \begin{block}{Tested with OpenSSL 1.0.2h}
+        \begin{itemize}
+            \item OpenSSL 1.0.2j - cannot distinguish 
+            \item OpenSSL 1.0.1e - can distinguish
+        \end{itemize}
+    \end{block}
+
 \end{frame}
 
 \begin{frame}
     \frametitle{Malware signature}
+    
 \end{frame}
 
 \begin{frame}
     \frametitle{Analyse traces} 
 \end{frame}
 
-\begin{frame}
-    \begin{block}{Context}
 
+\begin{frame}{Tools that could be interesting, but are not.}
 
-    \end{block}
-
-    \begin{block}{Fred's problems}
-
-        \begin{itemize}
-            \item Libraries version
-            \item Find other execution paths for a root cause
-        \end{itemize}
-
-    \end{block}
-
-\end{frame}
-
-\section{Find library version}
-\begin{frame}{Find library version automatically}
-
-    \begin{block}{Objective}
-        \begin{itemize}
-            \item Given a binary lib $L$ used in a program $P$
-            \item What is the version of $L$ ?
-            \item A database $D$ of sources of all the version is available
-        \end{itemize}
-    \end{block}
-
-    \begin{block}{Motivation}
-        \begin{itemize}
-            \item Programs often use old libraries
-            \item These libraries include known vulnerabilities
-        \end{itemize}
-    \end{block}
-
-    \begin{block}{Issues}
-        \begin{itemize}
-            \item Manual investigation is not trivial (strings, calls, \dots)
-            \item Only $2$ persons in the team (who is Adel ?)
-        \end{itemize}
-
-    \end{block}
-
-\end{frame}
-
-
-\begin{frame}{First approaches}
-
-\begin{block}{Compare binaries}
-	\begin{itemize}
-		\item Compare the binary code of $L$ with binaries generated by the sources of $D$
-		\item Compare a signature of $L$ with a signature of $D$ (CFG ?)
-		\item Compare the symbol list of $L$ with those of $D$
-	\end{itemize}
-\end{block}
-
-\begin{block}{Issues}
-	\begin{itemize}
-		\item Binaries, CFG, and symbols depend on the architecture compilation target and the compiler version
-		\item Binaries, CFG, and symbols depend on the source code
-		\item How to detect if the difference comes from the patch or the compilation ?
-	\end{itemize}
-\end{block}
-
-\end{frame}
-
-
-
-\begin{frame}{Second approaches}
-
-\begin{block}{Compare execution}
-	\begin{itemize}
-		\item Compare traces of execution from $L$ to those of $D$ 
-		\item Compare signatures of functions
-		\item Call functions with NULL arguments
-	\end{itemize}
-\end{block}
-
-\begin{block}{Issues}
-	\begin{itemize}
-		\item How to call functions of $L$ ? Sometimes there are tests
-		\item Differentiate only major versions
-		
-	\end{itemize}
-\end{block}
-
-
-\end{frame}
-
-\begin{frame}{Toy example}
-
-Mettre un exemple pour montrer comment ca marche cette idee
-
-
-\end{frame}
-
-\begin{frame}{Automating}
-\begin{block}{Scripts in Perl}
-\begin{itemize}
-	\item Generate headers from sources
-	\item Generate so from sources
-	\item Generate test.c
-\end{itemize}
-
-\end{block}
-
-\end{frame}
-
-
-
-\begin{frame}{Differentiate minor versions}
-
-\begin{block}{Heuristics}
-	\begin{itemize}
-		\item Compare CFG of functions
-		\item 
-	\end{itemize}
-\end{block}
-
-\end{frame}
-
-\begin{frame}{Further ideas}
-
-\begin{block}
-
-
-\end{block}
-
-\end{frame}
-
-
-\begin{frame}{Find other root paths}
 \begin{block}{Coccinelle}
 	\begin{itemize}
 		\item Find known bugs in source code
@@ -259,9 +186,8 @@ Mettre un exemple pour montrer comment ca marche cette idee
 		\item Useful to find other execution paths for root cause
 	\end{itemize}
 \end{block}
+
 \end{frame}
-
-
 
 
 
@@ -272,38 +198,18 @@ Mettre un exemple pour montrer comment ca marche cette idee
 
 	\begin{block}{Issues}
 		\begin{itemize}
-			\item Adel leaves us alone
-			\item A lot of tools do nothing
+			\item Tools are too specific to some cases, not our cases.
 		\end{itemize}
-	
 	\end{block}
+
 	\begin{block}{Results}
 		\begin{itemize}
-			\item Differentiate major versions =
+			\item Differentiate major versions ;
+            \item Some ideas to do better.
 		\end{itemize}
-		
 	\end{block}
 \end{frame}
 
-\begin{frame}{Organisation}
-
-\begin{block}{Tools and communication}
-\begin{itemize}
-	\item GitHub
-	\item IRC
-	\item Audio meetings
-\end{itemize}
-\end{block}
-
-\begin{block}{Agility}
-	\begin{itemize}
-		\item Separation in tasks
-		\item Meetings every hour
-	\end{itemize}
-\end{block}
-
-
-\end{frame}
 
 \begin{frame}{It brought us..}
 
@@ -312,14 +218,15 @@ Mettre un exemple pour montrer comment ca marche cette idee
 	\begin{itemize}
 		\item Inner peace
 		\item Happiness
+        \item Intimacy
+        \item We lost faith in formal methods, for binary analysis at least.
 	\end{itemize}
 \end{block}
 
 \begin{block}{Technical}
 	\begin{itemize}
-		\item Perl/Bash
-		\item Binaries
-		\item Compilation
+        \item We got back our Perl, that is priceless.
+		\item Binaries are complex but fun ;
 	\end{itemize}
 	
 \end{block}
