@@ -9,9 +9,9 @@ use Data::Dumper;
 sub isLib {
     my ($libInDB) = @_;
 
-    $cmd = "gcc $libInDB->{test} -L$libInDB->{tmpDir} -I$libInDB->{hDir} $libInDB->{compopt}";
+    $cmd = "g++ $libInDB->{test} -L$libInDB->{tmpDir} -I$libInDB->{hDir} $libInDB->{compopt}";
     say $cmd;
-    #return (system($cmd) == 0);
+    return (system($cmd) == 0);
 }
 
 
