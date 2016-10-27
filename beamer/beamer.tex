@@ -5,8 +5,12 @@
 \usepackage{amsmath}
 \usepackage{amsfonts}
 \usepackage{amssymb}
-\author{Adel Benamra \and Thomas Gougeon \and Ludovic Robin}
-\title{Vulnerabilities research - QuarksLab}
+\usepackage{color}
+\usepackage{graphicx}
+\definecolor{gray}{gray}{0.55}
+\author{\textcolor{gray}{Adel Benamara} \and \underline{Thomas Gougeon} \and \underline{Ludovic
+Robin}}
+\title{Library version checking - QuarksLab}
 %\setbeamercovered{transparent} 
 %\setbeamertemplate{navigation symbols}{} 
 %\logo{} 
@@ -26,47 +30,137 @@
 \section{Introduction}
 \begin{frame}{Introduction}
 
-\begin{block}{Context}
+    \begin{center}
+    \includegraphics[scale=0.38]{hacker.png}
+    \end{center}
+
+    \begin{block}{}
+        \begin{itemize}
+            \item \underline{Hackers} look for vulnerabilities in programs ;
+            \item Sometimes, finding one allow them to make an exploit ;
+            \item \underline{Developers} try to fix vulnerabilities, publishing a patch ;
+            \item \underline{Users} install the patch to hopefully fix the vulnerability on
+                their version of the program.
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}
+    \frametitle{What could go wrong ?}
+    \begin{center}
+    \includegraphics[scale=0.5]{box.png}
+    \end{center}
+
+    \begin{block}{}
+    \begin{itemize}
+        \item The vulnerability is not necessarily patched and the old version may remain ;
+        \item \Huge Very \textcolor{red}{dangerous} !
+    \end{itemize}
+    \end{block}
+
+    \end{frame}
+\begin{frame}
+    \begin{block}{Problem}
+        \begin{itemize}
+            \item How do we know if a library is patched ?  
+            \item How to check if we applied a patch ?
+        \end{itemize}
+    \end{block}
+   
+
+    Let L be the library
+        En entree on a une librairie binaire en .so et on va repondre a la
+        question: Quelle est la version de cette librairie?
+
+        Du coup on nous donne un .so 
+        Et on a pleiun de sources de librairies connues
+
+        Dans la suite on va considerer que la librairie binaire a ete compilee
+        dans la meme architecture que notre machine 
+\end{frame}
 
 
-\end{block}
+\begin{frame}
 
-\begin{block}{Fred's problems}
+    Approche naive, on compile nos librairies et les compare bit par bit avec
+    L
 
-\begin{itemize}
-	\item Libraries version
-	\item Find other execution paths for a root cause
-\end{itemize}
+    Probleme: L est compile avec un compilateur different et des options de
+    ocmpilations differentes.
 
-\end{block}
+    Les binaires sont trop differents, meme si ils font potentiellement la
+    meme chose.
+
+\end{frame}
+
+\begin{frame}
+
+    Il faut trouver des methodes plus intelligentes pour comparer les
+    binaires.
+
+    \begin{itemize}
+        \item Linkage 
+        \item Malware signature
+        \item Traces
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+    \frametitle{Link dynamically the library}
+    blabla  
+\end{frame}
+
+\begin{frame}
+    \frametitle{Malware signature}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Analyse traces} 
+\end{frame}
+
+\begin{frame}
+    \begin{block}{Context}
+
+
+    \end{block}
+
+    \begin{block}{Fred's problems}
+
+        \begin{itemize}
+            \item Libraries version
+            \item Find other execution paths for a root cause
+        \end{itemize}
+
+    \end{block}
 
 \end{frame}
 
 \section{Find library version}
 \begin{frame}{Find library version automatically}
 
-\begin{block}{Objective}
-	\begin{itemize}
-		\item Given a binary lib $L$ used in a program $P$
-		\item What is the version of $L$ ?
-		\item A database $D$ of sources of all the version is available
-	\end{itemize}
-\end{block}
+    \begin{block}{Objective}
+        \begin{itemize}
+            \item Given a binary lib $L$ used in a program $P$
+            \item What is the version of $L$ ?
+            \item A database $D$ of sources of all the version is available
+        \end{itemize}
+    \end{block}
 
-\begin{block}{Motivation}
-	\begin{itemize}
-		\item Programs often use old libraries
-		\item These libraries include known vulnerabilities
-	\end{itemize}
-\end{block}
+    \begin{block}{Motivation}
+        \begin{itemize}
+            \item Programs often use old libraries
+            \item These libraries include known vulnerabilities
+        \end{itemize}
+    \end{block}
 
-\begin{block}{Issues}
-	\begin{itemize}
-		\item Manual investigation is not trivial (strings, calls, \dots)
-		\item Only $2$ persons in the team (who is Adel ?)
-	\end{itemize}
+    \begin{block}{Issues}
+        \begin{itemize}
+            \item Manual investigation is not trivial (strings, calls, \dots)
+            \item Only $2$ persons in the team (who is Adel ?)
+        \end{itemize}
 
-\end{block}
+    \end{block}
 
 \end{frame}
 
