@@ -1,10 +1,11 @@
 from lxml import etree
 from os import listdir
-
+import sys
 
 output = ""
-for x in listdir("../sujet1/bdd/openssl/openssl-1.0.2h/headers/"):
-	output += "#include \""+ str(x) + "\"\n"
+for x in listdir(sys.argv[1]):
+	if ".h" in x:
+		output += "#include \""+ str(x) + "\"\n"
 	
 output += "int main(){\n"
 	
@@ -43,6 +44,6 @@ for fdecl in root:
 output += "}"
 
 
-f = open("../sujet1/bdd/openssl/openssl-1.0.2h/test.c", "w")
+f = open("./testt.c", "w")
 f.write(output)
 f.close()
