@@ -9,117 +9,115 @@ sub mvHeaders {
 
     if (!(-d $ddir)) { mkdir $ddir or die "$!"; }
 
-    sub wanted {
-
+    opendir my $dh, $hdir or die "oups";
+    while(readdir $dh){
         if (/\.h$/) {
-
-            copy $_,$ddir or die "cpy: $!";
+            say $_;
+            say "$hdir/$_", $ddir;
+            copy "$hdir/$_", $ddir or die "cpy: $!";
         }
     }
-    find \&wanted, $hdir or say "$hdir: $!";
-    #my @tab = split(/\s/, `find $hdir`);
-    #while(<@tab>) { print "|$_|"; wanted $_; }
-    
 }
 
 
-#my ($hdir, $ddir, $lib) = @ARGV;
+my ($hdir, $ddir, $lib) = @ARGV;
+mvHeaders $hdir, $ddir, $lib;
 
-my ($lib) = @ARGV;
-
-
-$dirSrc = "../sujet1/srcLib/$lib/";
-$strconfig = "config shared";
-
-chdir $dirSrc;
-opendir(my $dirSrc2, "./");
-
-my @files = readdir $dirSrc2;
-my $args;
-my $hid = "> /dev/null 2> /dev/null";
-for my $file (@files) {
-
-    if ($file =~ /.*\.tar\./) {
-        $args = ("tar xzf $file"); 
-   
- 
-        system($args) == 0 or say 'Tar error !';
-        }
-    }
-
-closedir $dirSrc2;
+#my ($lib) = @ARGV;
 
 
-chdir $dirSrc;
-opendir(my $dirSrc2, "./");
+#$dirSrc = "../sujet1/srcLib/$lib/";
+#$strconfig = "config shared";
 
-my @files = readdir $dirSrc2;
-for my $file (@files) {	
-
-	if($file eq "." || $file eq ".."){ next;}
-    if (-d $file) {
-        say "Configuring $file...";
-		$mfile=$file;
-        opendir(my $openssldir, $mfile) or die "Failed to open $mfile $!";
-        chdir $openssldir;
-
-        $args = "./$strconfig $hid";
-        say $args;
-        say `pwd`;
-        system($args) == 0 or say "Config error ! $!";
-        $pwd = `pwd`;
-        chomp $pwd;
-        #mvHeaders "$pwd/", "$pwd/../../../bdd/$lib/$file/headers/" ;
-        say $pwd;
-        
-		$findCMD = "find $pwd/include | grep -e \"\\.h\$\"";
-
-		my $findOUT = `$findCMD`;
-		my @findOUTArray = split /\s/, $findOUT;
-
-
-		say "cp all .h";
-
-		for my $line (@findOUTArray){	
-		
- 			say "ON COPIE $line DANS $pwd/../../../bdd/$lib/$file/headers/";
- 			`mkdir $pwd/../../../bdd/$lib/$file/headers`;
- 			copy $line, "$pwd/../../../bdd/$lib/$file/headers/";
-        
-        }	
-        closedir $openssldir;
-        chdir $dirSrc2;
-    }
-}
-
-closedir $dirSrc2;
-
-
-
-
-
-
-
-
-
-say "Cleaning all";
-
-chdir $dirSrc;
-opendir(my $dirSrc2, "./");
-my @files = readdir $dirSrc2;
-
-for my $file (@files) {
-
-    if ($file =~ /.*\.tar\.*/){}
-    else{
-        if ($file =~ /$lib/){
-            $cmdRF = "rm -rf $file";
-        	say $cmdRF;
-        	`$cmdRF`;
-
-        }
-
-    }
-}
-
-closedir $dirSrc2;
+#chdir $dirSrc;
+#opendir(my $dirSrc2, "./");
+#
+#my @files = readdir $dirSrc2;
+#my $args;
+#my $hid = "> /dev/null 2> /dev/null";
+#for my $file (@files) {
+#
+#    if ($file =~ /.*\.tar\./) {
+#        $args = ("tar xzf $file"); 
+#   
+# 
+#        system($args) == 0 or say 'Tar error !';
+#        }
+#    }
+#
+#closedir $dirSrc2;
+#
+#
+#chdir $dirSrc;
+#opendir(my $dirSrc2, "./");
+#
+#my @files = readdir $dirSrc2;
+#for my $file (@files) {	
+#
+#	if($file eq "." || $file eq ".."){ next;}
+#    if (-d $file) {
+#        say "Configuring $file...";
+#		$mfile=$file;
+#        opendir(my $openssldir, $mfile) or die "Failed to open $mfile $!";
+#        chdir $openssldir;
+#
+#        $args = "./$strconfig $hid";
+#        say $args;
+#        say `pwd`;
+#        system($args) == 0 or say "Config error ! $!";
+#        $pwd = `pwd`;
+#        chomp $pwd;
+#        #mvHeaders "$pwd/", "$pwd/../../../bdd/$lib/$file/headers/" ;
+#        say $pwd;
+#        
+#		$findCMD = "find $pwd/include | grep -e \"\\.h\$\"";
+#
+#		my $findOUT = `$findCMD`;
+#		my @findOUTArray = split /\s/, $findOUT;
+#
+#
+#		say "cp all .h";
+#
+#		for my $line (@findOUTArray){	
+#		
+# 			say "ON COPIE $line DANS $pwd/../../../bdd/$lib/$file/headers/";
+# 			`mkdir $pwd/../../../bdd/$lib/$file/headers`;
+# 			copy $line, "$pwd/../../../bdd/$lib/$file/headers/";
+#        
+#        }	
+#        closedir $openssldir;
+#        chdir $dirSrc2;
+#    }
+#}
+#
+#closedir $dirSrc2;
+#
+#
+#
+#
+#
+#
+#
+#
+#
+#say "Cleaning all";
+#
+#chdir $dirSrc;
+#opendir(my $dirSrc2, "./");
+#my @files = readdir $dirSrc2;
+#
+#for my $file (@files) {
+#
+#    if ($file =~ /.*\.tar\.*/){}
+#    else{
+#        if ($file =~ /$lib/){
+#            $cmdRF = "rm -rf $file";
+#        	say $cmdRF;
+#        	`$cmdRF`;
+#
+#        }
+#
+#    }
+#}
+#
+#closedir $dirSrc2;

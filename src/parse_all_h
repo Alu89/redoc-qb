@@ -1,28 +1,38 @@
 #!/usr/bin/perl
 
 use v5.10;
+
+use warnings;
+use strict;
 use threads;
 use threads::shared;
 use IO::Handle;
 use XML::Simple;
 use Data::Dumper;
 
-my $target_dir = shift;
 my $MAX_THREADS = 3;
+my $OUTPUT_FILE = 'output.xml';
+my $CSCAN_PATH = '/usr/bin/perl cscan';
 
-# First we find headers files 
-my $find_command = "/usr/bin/find $target_dir | grep -e '\\.h\$'";
+sub getHeaders {
+    my ($dir) = @_;
 
-my $header_files;
-$header_files = `$find_command`;
-my @hfiles = split /\s/, $header_files;
-pop @hfiles;
-my $nbfiles = $#hfiles;
-say "$nbfiles files to parse.";
+    my @res;
+    opendir my $dh, $dir or die "$dir: $!";
+    while(readdir $dh){
+        if (/\.h$/) {
+            push @res, "$dir/$_";
+        }
+    }
+    return @res;
+}
+
+my ($targetDir) = @ARGV;
+my @hfiles = getHeaders $targetDir;
 
 my @jobs;
 
-open($fh, ">output.xml") or die "cannot open output file"; 
+open(my $fh, ">$OUTPUT_FILE") or die "$OUTPUT_FILE: $!"; 
 
 say $fh "<root>";
 
@@ -37,6 +47,8 @@ for (my $i = 0; $i < $MAX_THREADS; $i++)
             while($run)
             {
                 my $file;
+
+                # Try to get a job
                 {
                     lock($j);
                     if ($j > $#hfiles){ $run = 0; }
@@ -46,16 +58,17 @@ for (my $i = 0; $i < $MAX_THREADS; $i++)
                         $j++;
                         say "--$j -> $file--";
                     }
-		
                 }
-                if($run){
-                    my $command = "/usr/bin/perl cscan --lazy --get parsed_fdecls $file";
-                    my $xml = `$command`;
 
+                # Execute a job
+                if ($run) {
+                    my $command = "$CSCAN_PATH --lazy --get parsed_fdecls $file 2> /dev/null";
+                    my $xml = `$command`;
+                    if ($?) {$xml = '';}
+                    # Get rid of xml version tag or error message
                     my $ind = index($xml, ">") + 1;
                     $xml = substr($xml, $ind, (length $xml) - $ind);
 		    
-                    say "Writing...";
                     {
                         lock($mutex_write);
                         print $fh $xml;
@@ -71,49 +84,3 @@ $_->join for @jobs;
 say $fh "</root>";
 
 close($fh);
-
-#my $config = XMLin("output.xml");
-#
-#$fdecl = $config->{'fdecl'};
-#
-#$tc = "";
-#for $file (@hfiles) {
-#    @name = split(/\//, $file);
-#    $tc .= "#include \"$name[$#name]\"\n"
-#}
-#$tc .= "main(){";
-#
-#
-#foreach $k (keys %$fdecl) {
-#    $args = $fdecl->{$k}->{'args'}{'arg'};
-#
-#    #print Dumper($args);
-#    #print Dumper( $fdecl->{$k});
-#    $tc .= "$k(";
-#    $toto = 0;
-#    foreach $kk (keys %$args){
-#	say $kk;
-#	if($kk eq "text"){
-#		$tc .= "NULL";
-#		last;
-#	}
-#
-#	if($toto != 0){
-#		$tc.= ", ";	
-#	}
-#  	$tc .= "NULL";
-#	$toto = 1;
-#  }
-#    $tc .= ");\n";
-#}
-#$tc .= "}";
-#
-#open my $test, ">", "test.c";
-#print $test $tc;
-##$cmd = "cp test.c ../sujet1/bdd/openssl/openssl-1.0.2h/test.c";
-##`$cmd`;
-
-
-
-
-
