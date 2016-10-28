@@ -35,6 +35,11 @@ sub genEntry {
     $libToCreate{version} = <$version>;
     close $version;
 
+    open my $compopt, "<", "$folder/compopt.txt" or die "$!";
+    $libToCreate{compopt} = <$compopt>;
+    chomp($libToCreate{compopt});
+    close $compopt;
+
     $libToCreate{hDir} = "$folder/headers";
     $libToCreate{soDir} = "$folder/so";
     $libToCreate{tmpDir} = "$folder/tmp";
