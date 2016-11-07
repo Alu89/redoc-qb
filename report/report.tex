@@ -1,11 +1,17 @@
 \documentclass{article}
 
 \usepackage{verbatim}
+\usepackage{color}
+\newcommand{\ludo}[1]{\textcolor{blue}{#1}}
+\newcommand{\thom}[1]{\textcolor{red}{#1}}
+\newcommand{\adel}[1]{\textcolor{green}{#1}}
 
 \newcommand{\symb}{{symbols}}
 \newcommand{\signature}{{sign}}
 \newcommand{\comp}{{compilation}}
 \usepackage{graphicx}
+
+
 
 \title{Library version identifier}
 
@@ -17,21 +23,84 @@
 	\maketitle
 	
 	\begin{abstract}
-		Programs often use third party code, as OpenSSL and zlib libraries. Sometimes, vulnerabilities are found and exploited by hackers in these libraries. Whereas developers are often reactive to patch these security flaws, the libraries are not always updated by the users. 
-		
-	To analyse the security of a system it is therefore important to check the version of the libraries that are used. Some pedestrian approaches that are time consuming exist, but there are inefficient in a large-scale analysis. An automatic process is thus needed.
+        \ludo{J'ai modif un peu l'abstract dis moi ce que tu en penses, et si
+        on peut re-rediger ce genre d'idee un peu mieux.}
+        \thom{Programs often use third party code, as OpenSSL and zlib
+        libraries.}
+        \ludo{These widely used libraries are critical since a vulnerability
+        found in one of these can impact many programs.}
+        %Sometimes, vulnerabilities are found and exploited by hackers in these
+        %libraries. 
+        \ludo{Identifying the version of a library is a necessity in two
+        cases:
+        \begin{itemize}
+            \item While developers try to be efficient patching these bugs,
+                users of these libraries are not as reactive to apply these
+                patches in their programs.
+            \item Proprietary programs are built in a way to avoid easy
+                retro-engineering, we want to be sure that such programs
+                are not vulnerable.
+        \end{itemize}
+        }
+%        Whereas developers are often reactive to patch these
+%        security flaws, the libraries are not always updated by the users. 
+%		
+%    To analyse the security of a system it is therefore important to check the
+%        version of the libraries that are used. Some pedestrian approaches
+%        that are time consuming exist, but there are inefficient in a
+%        large-scale analysis. An automatic process is thus needed.
+        \ludo{To check the security of applications of a system, it would be
+        necessary to check if libraries used by these programs are up to date,
+        and to consider proprietary applications, we have to decide this in a
+        binary program context.}
 	
 	\end{abstract}
 
 \section{Introduction}
 
-    Programs often use third party code, for example they can use the OpenSSL library to secure communications, or zlib to compress data. Sometimes, hackers find and exploit vulnerabilities in these libraries. Developers then create a patch to remove the vulnerability or to prevent its exploitation. The users of these libraries might use the last version proposed by the developers. In reality, it is not always the case and vulnerabilities are still present in some systems. It can be due to compatibility problems or because it is too complicate to update the system (e.g. embedded systems).
+    \ludo{Using libraries to code a program is both less time-consuming and more secure. }
+    \ludo{As a consequence, } 
+%    \thom{programs often use third party code. For example they can use the OpenSSL
+%    library to secure communications, or Zlib to compress data.} 
+    \ludo{Hackers are more prone to find vulnerabilities in these libraries
+    to get a wider impact. And those libraries are also more subject to
+    security checks and patches.}
+     
+    \ludo{Thus, applying these patches becomes critical.}
+%    \thom{Sometimes,
+%    hackers find and exploit vulnerabilities in these libraries. Developers
+%    then create a patch to remove the vulnerability or to prevent its
+%    exploitation.} 
+    \ludo{End-users of these libraries, i.e. applications developers, do not
+    always update their programs at the same pace as patches are published,
+    and in the case of some proprietary programs that are shadowy using those
+    libraries we do not know which version has been used.}
+   % \thom{The users of these libraries might use the last version
+   % proposed by the developers. In reality, it is not always the case and
+   % vulnerabilities are still present in some systems.}
+    \ludo{Distinguishing versions of libraries used in a program is necessary
+    to be confident in the security of an application.} 
     
-    A key point to analyse the security of a system is then to identify the library version used by the programs. Some pedestrian approaches exist, but they are time consuming, and totally inefficient in a large scale analysis. A system can embed thousands of libraries, an automatic process is therefore needed to identify the version of a library.
+    %    \thom{It can be due to
+%    compatibility problems or because it is too complicate to update the
+    %    system (e.g. embedded systems).}
     
-    At this time, our investigations concern only dynamic libraries. To adapt these techniques to static libraries, we need to find a way to extract the library from the binary using it statically (that is far away from a trivial task). We also only investigate non-stripped binaries.
+    %    \thom{A key point to analyse the security of a system is then to identify the
+    %    library version used by the programs. }
     
-    The first section defines the problem and describes the considered approaches, the second section details the approach that we investigated.
+    \ludo{To do so, }some pedestrian approaches exist,
+    but they are time consuming, and totally inefficient in a large scale
+    analysis. A system can embed thousands of libraries, an automatic process
+    is therefore needed to identify the version of a library.
+    
+    \ludo{Ptet modifier cette partie}
+    At this time, our investigations concern only dynamic libraries. To adapt
+    these techniques to static libraries, we need to find a way to extract the
+    library from the binary using it statically (that is far away from a
+    trivial task). We also only investigate non-stripped binaries.
+    
+    The first section defines the problem and describes the considered
+    approaches, the second section details the approach that we investigated.
     
 
    %\section{Deciding version of a library used by a program.} 
