@@ -5,123 +5,201 @@
 \newcommand{\symb}{{symbols}}
 \newcommand{\signature}{{sign}}
 \newcommand{\comp}{{compilation}}
+\usepackage{graphicx}
+
+\title{Library version identifier}
+
+
+\author{Thomas Gougeon \and Ludovic Robin \and Adel Benamara}
+
 
 \begin{document}
+	\maketitle
+	
+	\begin{abstract}
+		Programs often use third party code, as OpenSSL and zlib libraries. Sometimes, vulnerabilities are found and exploited by hackers in these libraries. Whereas developers are often reactive to patch these security flaws, the libraries are not always updated by the users. 
+		
+	To analyse the security of a system it is therefore important to check the version of the libraries that are used. Some pedestrian approaches that are time consuming exist, but there are inefficient in a large-scale analysis. An automatic process is thus needed.
+	
+	\end{abstract}
 
-    This report is, at the moment, a draft reminding us the different steps we
-    considered (even trivially false ones) to reach our conclusions.
+\section{Introduction}
 
-   \section{Deciding version of a library used by a program.} 
-
-   \subsection{First try to define the problem.}
-
-   Let $\mathcal{D}$ a database of versionned libs to be set of $n$ tuples such that:
-    \[ \mathcal{D} = \{ (n_i, v_i, s_i, \mathcal{B}_i) \}_{\{i \in \{1 \dots n\}\}}  \]
-    where $n_i$ is the library name, $v_i$ a the library version, $s_i$ the source
-    code of the library, and $\mathcal{B}_i$ is the set of binary compiled
-    from the source code $s_i$. 
-
-    Let $L$ be a binary code of a library.
-
-    We want to find a function $V(L,D)$ such that if $L$ is compiled from a
-    source code $C$ and $(N, V, C, \_) \in \mathcal{D}$ then $V(L,D)$ returns
-    $(N,V)$.
-
-    \subsection{Manual methods to look for a library version.}
-    Finding some version numbers inside the binary file as data.
-    It works for openssl but not with zlib.
-    Issue, it does not seem to be a standard practice.
-
-    Looking for symbols in the file. 
-    Hypothesis: It returns the calls to the libs.
-    Issue, it does not really help to get the version.
-
-    Looking for version info function in the symbols of the file. Would
-    probably work for zlib if we understood how this function works.
-    Example: In the Good..apk, a library calls or includes the function zlibVersion statically. This function returns the version number, but we were not able to retrieve it in the binary code of the function.
+    Programs often use third party code, for example they can use the OpenSSL library to secure communications, or zlib to compress data. Sometimes, hackers find and exploit vulnerabilities in these libraries. Developers then create a patch to remove the vulnerability or to prevent its exploitation. The users of these libraries might use the last version proposed by the developers. In reality, it is not always the case and vulnerabilities are still present in some systems. It can be due to compatibility problems or because it is too complicate to update the system (e.g. embedded systems).
     
-    Semantically checking last pushed versions of functions seems to be an
-    interesting approach, we may have a look at it later.
-
-    \subsection{Naive approach}\label{naive-notations}
-    We could simply try if there exists $(N, V, \_, \{\dots, B, \dots\} \in
-    \mathcal{D}$ such that $L = B$.
-
-    But after some tests and look on the \verb|diff| of these binaries we
-    concluded that major differences can come from the compiling options,
-    compilers and related stuff.
-
-    Question: can we generate all possible compiled binaries in our database ? 
+    A key point to analyse the security of a system is then to identify the library version used by the programs. Some pedestrian approaches exist, but they are time consuming, and totally inefficient in a large scale analysis. A system can embed thousands of libraries, an automatic process is therefore needed to identify the version of a library.
     
-    Answer: It would certainly be a bad idea\dots
-
-    \subsection{Second approach}\label{approach-sign}
-    Can we find a smarter way to compute $V(L,D)$ ?
-
-    We could find a function $\signature$ such that $\signature(L) =
-    \signature(B)$.
-
-    We plan to reuse a signature function designed for malware.
-
-    Expected issues: since a new version is not that different from the former
-    one, we do not know if we will obtain good results. In the binary, differences between two versions may not be more important than differences between two different compilers, or optimisations.
-
-    \subsection{Third approach}
+    At this time, our investigations concern only dynamic libraries. To adapt these techniques to static libraries, we need to find a way to extract the library from the binary using it statically (that is far away from a trivial task). We also only investigate non-stripped binaries.
     
-    %We conclude in the previous part that it is not relevant to compare  binaries that are compiled differently. 
-
-    We will now work on distinguishing versions with the differences brought
-    by version patches.
-
-    % In the following we consider the same notations as in subsection~\ref{naive-notations}.
-
-    Let $C$ be the source code of the version $V$ of library $N$,
-    i.e. $C$ could be OpenSSL library sources, $V$ the version of $C$ which
-    is $1.0.0$ and $N$ could be the name of the library, here it would be OpenSSL.
-
-    Let $\mathcal{D}$ be a database containing several $3$-tuple $(C,V,N)$, and $P(C, C')$ be the $c$ code upgrading $C$ to $C'$
-
-    Checking if the $c$ is handled by $L$ is not trivial. Trying method based on simplified CFG to check similarities lead to the same issues as in subsection~\ref{approach-sign}. Hence, we want to check
-    if the behaviour of patched function differs.
-
-    Basically we will check if the patched functions generate the same traces
-    as $L$ functions.
-
-
-    %TODO : comparer les signatures des fonctions pour discriminer des
-    %librairies
-
-    So we shifted the problem to a sub-problem that can decide the version of
-    $L$, which is: Is the function $f \in L$ is up to date considering $C$.
-
-    We will first consider dynamically linked libraries.
-    
-    Different major versions have different signature functions. For example one function $f$ from OpenSSL 1.0.* and the same function $f$ from OpenSSL 1.1.* have different arguments, then it is possible to eliminate a lot of versions of OpenSSL for the library $L$. The limitation of this trick is that all the function in two different minor versions as OpenSSL 1.0.2.h and OpenSSL 1.0.2.j have the same signatures.
-
-    Procedure to check if $f \in L$, considering that $f \in \symb(C)$
-    First we automatically generate a $c$ code $P$ calling $f$ with random
-    parameters and catching/returning its behaviour. 
-    Second, we compile $P'$ dynamically linking $\comp(C)$ according to the
-    headers of $C$, we will note this compiled program $\comp(P')$. 
-    Third, we compile $P$ dynamically linking $L$ according to the headers of
-    $C$, we will note this compiled program $\comp(P)$. 
-    Last, we check the similarities of returns of $\comp(P)$ and $\comp(P')$
-    to decide.
-
-
-    \subsection{Expected optimizations}
-    We do not expect good result using only random testing. Hence, we will aid
-    testing by an analysis of the patch, finding specific traces to
-    distinguish when it is applied, we have yet to define details about this
-    part. 
-    Or we can do something similar to the concolic approach.
+    The first section defines the problem and describes the considered approaches, the second section details the approach that we investigated.
     
 
+   %\section{Deciding version of a library used by a program.} 
+   \section{Identify library version}
+	This section defines the problem, and describe our approaches to solve the problem.
+   %\subsection{First try to define the problem.}
+   \subsection{Problem definition}
+
+   Let $\mathcal{D}$ a database of binaries representing different version of libraries containing $n$ tuples such that:
+    \[ \mathcal{D} = \{ (N_i, v_i, s_i, b_i) \}_{\{i \in \{1 \dots n\}\}}  \]
+    where $N_i$ is the library name, $v_i$ the library version, $s_i$ the source
+    code of the library, and $b_i$ is the binary compiled from the source code $s_i$. 
+
+    Let $L$ be a binary code of a library. We want to find a function $V(L,D)$ such that if $L$ is compiled from a source code $C$ and $(N, V, C, \_) \in \mathcal{D}$ then $V(L,D)$ returns $(N,V)$.
+
+%    \subsection{Manual method to look for a library version.}
+	\subsection{Pedestrian approach}
     
+	    One way to find the version of a library binary consists in a pedestrian approach. Analysing the symbols or the strings of the binary we can find what is the version of the library. For example, in OpenSSL executing the ``strings'' command of Linux, outputs the version: ``OpenSSL 1.0.2g  1 Mar 2016''. This technique does not work for the library zlib. Include the version of the library in the binary does not seem to be a standard practice.
+	Applying this pedestrian approach is time consuming, and totally inefficient for a large-scale analysis, for example a system using thousands of libraries.
+	   
+	        
+
+%THOMAS : Pas interessant je pense
+%    Looking for symbols in the file. 
+%    Hypothesis: It returns the calls to the libs.
+%    Issue, it does not really help to get the version.
+%    Looking for version info function in the symbols of the file. Would
+%   probably work for zlib if we understood how this function works.
+%  Example: In the Good..apk, a library calls or includes the function zlibVersion statically. This function returns the version number, but we were not able to retrieve it in the binary code of the function.
+    
+    %THOMAS : Qu'est ce qu'on veut dire par la ?
+    %Semantically checking last pushed versions of functions seems to be an    interesting approach, we may have a look at it later.
+
+    \subsection{Naive approach: Compare bitwise binaries }
+    \label{naive-notations}
+    We could simply try if there exists $(N, V, C, B) \in  \mathcal{D}$ such that $L = B$. A key point of this approach is that for a given source code, there exists a lot of binaries depending of the compilation target, the compiler and its version, and the compilation options. One may expect that these differences are not as important as the differences brought by the patch on the source code.
+
+    Unfortunately after some tests, looking at the symbol and the assembly code, we concluded that it seems impossible to distinguish whether the difference between two binaries come from the source code or from the compiler options or other stuffs describe previously.
+    
+    One idea was to generate all the possible binaries from a library source code. It implies to compile the source code for all the compilation target, all the compiler and all their version, and all the different compilation option. It seems to be impossible in practice.
+
+
+    \subsection{Smarter approach: Signature function}\label{approach-sign}
+    A smarter way to compute $V(L,D)$ consists in apply a $\signature$ function such that $\signature(L) = \signature(B)$ if $L$ and $B$ are the same version of the library but not necessarily compiled with the same options or on the same architecture.
+	
+	One idea was to use the same function that the ones used for malware, e.g. based on simplified control flow graph. Due to a lack of time we have not investigated this idea yet. The main issue could be the same as the previous approach. Since a patch does not necessarily change a lot of code, differences between two versions may not be more important than differences between two different compilers, or optimisations.
+	
+	\subsection{Other approach}
+	
+%	Let $C$ be the source code of the version $V$ of library $N$, i.e. $C$ could be OpenSSL library sources, $V$ the version of $C$ which is $1.0.0$ and $N$ could be the name of the library, here it would be OpenSSL.
+
+ %   Let $\mathcal{D}$ be a database containing several $3$-tuple $(C,V,N)$, and
+ 
+ %Let $P(C, C')$ be the $c$ code upgrading $C$ to $C'$
+
+    %Checking if the $c$ is handled by $L$ is not trivial. Trying method based on simplified CFG to check similarities lead to the same issues as in subsection~\ref{approach-sign}. Hence, we want to check if the behaviour of patched function differs.    
+    
+    %Basically we will check if the patched functions generate the same traces     as $L$ functions.
+    
+    
+   % So we shifted the problem to a sub-problem that can decide the version of     $L$, which is: Is the function $f \in L$ is up to date considering $C$.
+       %We will first consider dynamically linked libraries.
+   
+	In this approach we guess that if a patch is applied on a library $L$ to update a library version $V_1$ to $V_2$ then there exists at least one function $f \in L$ in $V_2$ in which its behaviour change compared to $V_1$. If not, the patch is too minor to fix a security issue. As a consequence, the comparison is reduced to the function level rather than the library level. We hope that it leads to relax the problem.
+	
+	
+  Several ideas are considered to compare a function $f$:  
+	\begin{itemize}
+		\item Compare CFG of $f$ as in malware detection,
+		\item Compare traces of execution of $f$,
+		\item Compare signatures of $f$ (arguments, name, return type).
+	\end{itemize}
+	
+	\subsubsection{Compare CFG}
+	
+	The idea is to construct a control flow  graph for each function of the library, and to compare them. As said previously, we have not experimented it yet.
+	
+	
+	\subsubsection{Compare traces}
+
+%	Procedure to check if $f \in L$, considering that $f \in \symb(C)$. First we automatically generate a $c$ code $P$ calling $f$ with random parameters and catching/returning its behaviour. Second, we compile $P'$ dynamically linking $\comp(C)$ according to the headers of $C$, we will note this compiled program $\comp(P')$. Third, we compile $P$ dynamically linking $L$ according to the headers of $C$, we will note this compiled program $\comp(P)$. Last, we check the similarities of returns of $\comp(P)$ and $\comp(P')$ to decide. We do not expect good result using only random testing. Hence, we will aid testing by an analysis of the patch, finding specific traces to distinguish when it is applied, we have yet to define details about this part. Or we can do something similar to the DSE approach.
+%	  We do not expect good result using only random testing. Hence, we will aid testing by an analysis of the patch, finding specific traces to distinguish when it is applied, we have yet to define details about this part. Or we can do something similar to the DSE approach.	
+
+	We own a library $L$ in version $V_1$, its binary is called $b_1$ and we have a binary $b_x$ of $L$ in which the version is unknown. We want to decide whether $b_x$ is the version $V_1$ or not. We pick a function $f$ of the library version $V_1$ and we compare the traces when we execute $f$ using $b_1$ and $b_x$.	
+	These traces are the return value of the function and the system calls used in the function.
+	 The main issue is what are the values given as parameters to $f$ to be executed ? When these arguments are built-in types, a naive solution is: random testing. Unfortunately, most part of the functions use complex structures, it seems impossible to generate values for them.	
+	
+	\subsubsection{Compare symbols function}
+	
+	Based on the same intuition than the previous one, now we only want to execute the function $f$ with arguments set to $0$ for basics type, and NULL otherwise. Hence, we fix the issue of the previous one, but we cannot analyse the execution traces, we just check if the program can be executed. More details are given in Section~\ref{section:libraryChecker}.
+	
+
+
+
+\section{Library version identifier}
+\label{section:libraryChecker}
+
+	This section describes the approach that we investigated. This method tries to distinguish the library version by analysing whether a patch adds or removes a constant, and whether a patch adds, removes, or modifies a function of the library.
+	   
+    Different major versions have different signature functions. For example, it exists one function $f$ from OpenSSL 1.1.* that does not exist in OpenSSL 1.0.*. As a consequence, it is possible to eliminate a lot of versions of OpenSSL for an unknown library $L$ by checking the existence of this function $f$. If $f$ exists, then the OpenSSL version cannot be lower than 1.1.*. The limitation of this idea is that different minor versions as OpenSSL 1.0.2.h and OpenSSL 1.0.2.j own the same functions and constants.
+   
+Based on this idea we set up a program that automatic detect the version of an unknown library. We start this section with an overview of the program, then some details about the program are given and some results and improvements are presented.
+
+	\subsection{Overview of the method}
+   
+
+	
+	We own several source codes of different libraries, with different versions for each library. Compiling these sources codes we obtain different .so files for each library version. 
+	For each library version, using the header files, we extract the constants and functions proposed by the library and we generate a C program main.c using these functions. Compiling this main.c we obtain a binary program $P$ that we link with the .so file.
+
+
+	Let lib.so be a .so file coming from an unknown library version. To identify its version we replace in each library version that we own the .so files by lib.so. Then we execute the program $P$ liked with lib.so rather than its original .so file.
+ If the program $P$ can be executed then lib.so is the same file that the one replaced. Then its version is identified.
+ 
+ In reality, several programs $P$ can be executed with the file lib.so, for example a lib.so file coming from OpenSSL 1.0.2.h, will generate a correct execution for the programs $P$ of OpenSSL 1.0.2.h and OpenSSL 1.0.2.j.
+
+	
+		
+    \subsection{Method details}
+	\subsubsection{Compile all the .so}
+	
+	The first step involved by our program is the compilation of the sources of all the libraries to generate the .so files. We have written a Perl script to achieve it.
+	
+	\textbf{Issues} Oldest version of libraries cannot be compiled with the same compiler, nor the same dependencies as the newest versions. It seems to be infeasible to compile all the version of the library on one single non-adapted operating system. The question is how can we set up an operating system to compile all these version easily ?
+	
+   
+   	\subsubsection{Extract functions and constants from headers files}
+   	
+   	The second step consists in extracting the functions and constants from the header files of the library sources. Using cscan we are able to extract a part of the functions.
+   	
+   	\textbf{Issues} In some libraries there are a lot of macros, and most part of tools available to extract the functions are not working perfectly when there are macros.   		
+   	
+   	
+   	\subsubsection{Test all the .so}
+   		
+   		We have written a Perl script that take in input an unknown .so and using our database of pre-compiled .so and $P$ programs, the script outputs a list of candidates for the version of the unknown .so.
+
+   	
+   	\subsection{Results and future improvements}
+   	
+   		We have been able to discriminate versions of OpenSSL, executing the program $P$ of OpenSSL 1.0.2h:
+
+        \begin{itemize}
+            \item OpenSSL 1.0.2j - cannot distinguish; 
+            \item OpenSSL 1.0.1e - can distinguish.
+        \end{itemize}
+
+
+   		We have been able to discriminate versions of zlib, executing the program $P$ of zlib 1.2.8:
+        \begin{itemize}
+            \item zlib 1.2.7 - cannot distinguish; 
+            \item zlib 1.1.3- can distinguish.
+        \end{itemize}
+
+
+   	
+	   	We need to test our program with more libraries and version. The main issues are the ones mentioned in each subsection, compiling automatically more .so and extract more functions from each library.
+
+    
+    
+
+\iffalse    
     \subsection{Other tools}
 
 		\subsubsection{Coccinelle} 
 			Coccinelle uses static analysis to find pattern in C source code. Using a known bug as a pattern leads to discover if the patch was applied or not. It seems not to be interesting in our case, because we deal with binaries.
 		\subsubsection{n-gram}
+\fi
 
 \end{document}
