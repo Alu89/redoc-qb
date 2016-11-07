@@ -1,0 +1,350 @@
+#!/usr/bin/perl -w 
+
+use v5.10;
+use warnings;
+use strict;
+
+use Getopt::Long;
+use Archive::Tar;
+use File::Basename;
+use File::chdir;
+use File::Find;
+use File::Spec;
+use File::Copy;
+use XML::Simple;
+use Data::Dumper;
+use File::Copy::Recursive qw(dircopy);
+
+my $VERSION_FILENAME = 'version.txt';
+my $NAME_FILENAME = 'name.txt';
+my $COMPOPT_FILENAME = 'compopt.txt';
+my $PROG_FILENAME = 'test.c';
+my $HEADERS_FOLDER = 'headers';
+my $SO_FOLDER = 'so';
+my $TMP_FOLDER = 'tmp';
+my $CSCAN = '/usr/bin/perl cscan --lazy --get parsed_fdecls ';
+my $OUTPUT_CSCAN = 'output.xml';
+my $GCC = 'gcc -fpermissive ';
+my @CONFIGURE_CMD = (
+    './configure --shared', 
+    './config shared', 
+    './configure', 
+    './config' );
+
+
+sub _getBaseEntry {
+    # Return a hash map contening the most basic info of a DB entry
+    my $folder = shift;
+
+    my %lib = (
+        files => {
+            name => "$folder/$NAME_FILENAME",
+            version => "$folder/$VERSION_FILENAME",
+            compopt => "$folder/$COMPOPT_FILENAME", 
+            test => "$folder/$PROG_FILENAME" },
+        folders => { 
+            base => $folder,
+            headers => "$folder/$HEADERS_FOLDER",
+            so => "$folder/$SO_FOLDER",
+            tmp => "$folder/$TMP_FOLDER" } 
+    );
+    \%lib;
+}
+
+
+sub getEntry {
+    # Return a DB entry as a well formed hash map 
+    my $folder = shift // '.';
+
+    my %lib = %{_getBaseEntry $folder};
+    while (my ($k, $v) = each %{$lib{files}}) {
+        if (open FH, "<$v") {
+            $lib{$k} = <FH>;
+            if (defined $lib{$k}) { chomp $lib{$k}; }
+            close FH;
+        }
+    }
+    \%lib;
+}
+
+
+sub initEntry {
+    my ($folder, $name, $version) = @_;
+
+    my %lib = %{_getBaseEntry "$folder/$name-$version"};
+
+    mkdir $lib{folders}{base};
+
+    for (values %{$lib{folders}}) { mkdir; }
+
+    my $fh;
+    open $fh, '>', $lib{files}{compopt}; close $fh;
+    open $fh, '>', $lib{files}{name}; print $fh $name; close $fh;
+    open $fh, '>', $lib{files}{version}; print $fh $version; close $fh;
+
+    my %lib_get = %{getEntry $lib{folders}{base}};
+
+    \%lib_get;
+}
+
+
+sub findSo {
+    # Find so files in folder and return a list
+    my ($folder) = @_;
+    my @result;
+    my $wanted = sub { 
+        if (/\.so$/){ push @result, $File::Find::name; }
+    };
+    find($wanted,$folder);
+    @result;
+}
+
+
+sub getHeaders {
+    # List headers from the DB entry in dir
+    my ($lib) = @_;
+
+    my @res;
+    my $h = $lib->{folders}{headers};
+    opendir my $dh, "$h" or warn "$h: $!";
+    while(readdir $dh){
+        if (/\.h$/) { push @res, "$h/$_"; }
+    }
+    @res;
+}
+
+
+sub setSo {
+    # Put So files from so_folder to the lib (which is a DB entry) folder
+    my ($lib, $so_folder) = @_; 
+
+    my @so = findSo $so_folder;
+    foreach my $so (@so) {
+        my $n = basename $so;
+        if ($n =~ /^lib([a-zA-Z])\.so/) { 
+            copy $so, $lib->{folders}{so};
+            open my $fh, '>', $lib->{files}{compopt} or warn "$lib->{files}{compopt}: $!";
+            print $fh "-l$1 ";
+            close $fh;
+        }
+    }
+}
+
+
+sub setHeaders {
+    # Put header files from h_folder to the lib headers folder
+    my ($lib, $h_folder) = @_;
+
+    my $dir = '.';
+
+    # The point here is to determinate the .h folder, 
+    # looking for the main .h file
+    my $wanted = sub {
+        if (/$lib->{name}\.h$/) { $dir = $File::Find::dir; }
+    };
+    find($wanted, $h_folder);
+
+    opendir(my $dh, $dir);
+    while (readdir($dh)) {
+        if (/\.h$/){ copy("$dir/$_", $lib->{folders}{headers}); }
+    }
+    close $dh;
+}
+
+
+sub parseCscan {
+    # Generate the test program based on headers
+    my ($lib) = @_;
+
+    my $hide = '2> /dev/null';
+    my $cmdTest = "$GCC -I$lib->{folders}{headers} -L$lib->{folders}{so} $lib->{compopt} $lib->{files}{test} " . $hide;
+
+    my @hfiles = getHeaders $lib;
+
+    my $config = XMLin($OUTPUT_CSCAN);
+    my $fdecl = $config->{'fdecl'};
+
+    my $includes = '';
+    my $head_main = 'main(){';
+    my $body_main = '';
+    my $bot_main = '}';
+
+    for my $h (@hfiles) {
+        my $hh = basename($h);
+        my $strIncl = "#include \"$hh\"\n";
+        my $tmpIncl = $includes . $strIncl;
+
+        open my $fh, ">", "$lib->{files}{test}";
+        say $fh $tmpIncl;
+        say $fh $head_main;
+        say $fh $body_main;
+        say $fh $bot_main;
+        close $fh;
+
+        if (!system($cmdTest)) {
+            $includes .= $strIncl;
+        }
+    }
+    foreach my $k (keys %$fdecl) {
+        my $nbParams = 0;
+        foreach my $p (keys %{$fdecl->{$k}}) {
+            if ($p eq 'args') {
+                foreach my $a (keys %{$fdecl->{$k}->{$p}}) {
+                    $nbParams++; 
+                }
+            }
+        }
+        my $strMain = "$k(";
+        for (my $i = 0; $i < $nbParams; $i++){
+            if (!$i) { $strMain .= 'NULL'; }
+            else{ $strMain .= ',NULL'; }
+        }
+        $strMain .= ");\n";
+        say $strMain;
+        my $tmp_body_main = $body_main . $strMain;
+
+        open my $fh, ">", "$lib->{files}{test}";
+        say $fh $includes;
+        say $fh $head_main;
+        say $fh $tmp_body_main;
+        say $fh $bot_main;
+        close $fh;
+
+        #say $cmdTest;
+        if (!system($cmdTest)) {
+            $body_main .= $strMain;
+        }
+        else { #say "compilation failed"; 
+        }
+    }
+
+    open my $fhh, ">", "$lib->{files}{test}";
+    select $fhh;
+    say $includes;
+    say $head_main;
+    say $body_main;
+    say $bot_main;
+    select STDOUT;
+    close $fhh;
+}
+
+
+sub scanEntry {
+    # Scan headers to generate a xml file
+    my ($lib) = @_;
+
+    opendir(my $dh, $lib->{folders}{headers}) or die "$lib->{folders}{headers}: $!";
+    open(my $fh, ">", $OUTPUT_CSCAN);
+
+    say $fh '<root>';
+    while (readdir($dh)) {
+        my $cmd = "$CSCAN $lib->{folders}{headers}/$_ 2> /dev/null";
+        say $cmd;
+        my $xml = `$cmd`;
+        if ($?) { $xml = ''; }
+# Get rid of xml version
+        my $ind = index($xml, ">") + 1;
+        $xml = substr($xml, $ind, (length $xml) - $ind);
+
+        say $fh $xml;
+    }
+    say $fh '</root>';
+    close $fh;
+}
+
+
+sub genEntry {
+    # main function to gen a new entry in our DB 
+    my ($tgzFile, $folder) = @_;
+
+    my ($file, $dir, $ext) = fileparse $tgzFile, qr/\.[A-Za-z\.]+/;
+
+    $file =~ /([A-Za-z]+)[_-]+([0-9\.a-zA-Z]+)/; 
+    my ($name, $version) = ($1, $2);
+
+    my $tar = Archive::Tar->new;
+    $tar->read($tgzFile);
+    { 
+# Here, we should give a name that makes sense to the resulting folder
+        my $result = 0;
+        {
+            local $CWD = $dir; $tar->extract() or die "$tgzFile: $!"; 
+
+            local $CWD = $file;
+
+            say "Compiling $name-$version...";
+            my $hide = '&> /dev/null';
+            foreach my $cmd (@CONFIGURE_CMD) {
+                say $cmd;
+                if (!system("$cmd $hide")) {
+                    say 'make';
+                    if (!system("make $hide")) { 
+                        my @soFiles = findSo '.';
+                        if ((scalar @soFiles)){
+                            $result = 1; 
+                            last; 
+                        }
+                    } 
+                }
+            }
+        }
+
+        if ($result) {
+# We successfully compiled 
+            say 'Compiled.';    
+            my ($lib) = initEntry $folder, $name, $version;
+            setSo $lib, "$dir/$file";
+            setHeaders $lib, "$dir/$file"; 
+            scanEntry $lib;
+            parseCscan $lib;
+        } else {
+            die "$tgzFile: Failed to compile library."; 
+        } 
+    }
+}
+
+
+sub isLib {
+    my ($lib) = @_;
+
+    my $cmd = "$GCC $lib->{files}{test} -L$lib->{folders}{tmp} -I$lib->{folders}{headers} $lib->{compopt}";
+    !system($cmd);
+}
+
+
+sub genTmpDir {
+    my ($libToCheck, $libToReplace, $lib) = @_;
+
+    dircopy $lib->{folders}{so}, $lib->{folders}{tmp};
+    copy $libToCheck, $lib->{folders}{tmp}, $libToReplace;
+}
+
+
+sub checkLib {
+    # Main function to check a lib version
+    my ($lib, $libFolder) = @_;
+    opendir(my $libDBh, $libFolder);
+    while(my $libDB = readdir($libDBh)) {
+        opendir my $dir, "$lib->{folders}{so}";
+        while(my $file = readdir $dir) {
+            if ($file =~ /\.so$/){
+                genTmpDir "$dir/$file", $file, $lib; 
+                if(isLib $lib) {
+                    say "We found it";
+                }
+            }
+        }
+        close $dir;
+    }
+}
+
+# === ARGUMENTS ===
+my $gen = '';
+my $check = '';
+GetOptions("gen=s" => \$gen, "check=s" => \$check);
+if ($#ARGV + 1 != 1) { die "Takes one argument."; }
+my ($folder) = @ARGV;
+
+# === MAIN ===
+if ($gen) { genEntry $gen, $folder; }
+else { if ($check) { checkLib $check, $folder; } }

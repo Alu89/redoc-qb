@@ -50,18 +50,6 @@ sub genEntry {
     return \%libToCreate;
 }
 
-
-my %libStored = (
-    name => 'openssl',
-    version => 1.0.0,
-    compopt => '-lwouhou',
-    test => './test.c', 
-    soDir => './so', 
-    tmpDir => './tmp',
-    hDir => './headers'
-);
-
-
 my $NumberOfMandatoryParameters = 2;
 if ($#ARGV + 1 != $NumberOfMandatoryParameters) {die "Wrong parameters";}
 my ($libToCheck, $folderLibDB) = @ARGV;
