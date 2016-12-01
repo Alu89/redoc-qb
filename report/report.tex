@@ -179,31 +179,35 @@ Hence, we try to soften the comparison of those binaries and pick the more simil
 %	Procedure to check if $f \in L$, considering that $f \in \symb(C)$. First we automatically generate a $c$ code $P$ calling $f$ with random parameters and catching/returning its behaviour. Second, we compile $P'$ dynamically linking $\comp(C)$ according to the headers of $C$, we will note this compiled program $\comp(P')$. Third, we compile $P$ dynamically linking $L$ according to the headers of $C$, we will note this compiled program $\comp(P)$. Last, we check the similarities of returns of $\comp(P)$ and $\comp(P')$ to decide. We do not expect good result using only random testing. Hence, we will aid testing by an analysis of the patch, finding specific traces to distinguish when it is applied, we have yet to define details about this part. Or we can do something similar to the DSE approach.
 %	  We do not expect good result using only random testing. Hence, we will aid testing by an analysis of the patch, finding specific traces to distinguish when it is applied, we have yet to define details about this part. Or we can do something similar to the DSE approach.	
 
-    \ludo{J'ai des idées pour re-rédiger ca, mais c'est compliqué ;)}
-    We own a library $L$ in version $V_1$, its binary is called $b_1$ and we
-    have a binary $b_x$ of $L$ in which the version is unknown. We want to
-    decide whether $b_x$ is the version $V_1$ or not. We pick a function $f$
-    of the library version $V_1$ and we compare the traces when we execute $f$
-    using $b_1$ and $b_x$.	These traces are the return value of the function
-    and the system calls used in the function.  The main issue is what are the
-    values given as parameters to $f$ to be executed ? When these arguments
-    are built-in types, a naive solution is: random testing. Unfortunately,
-    most part of the functions use complex structures, it seems impossible to
+    In this approach we will check if $P$ et $b$ version is the same
+    considering traces of a function $f$ which is common to $P$ and $b$.
+
+    To do so we will compare an execution trace of $f$
+    version in $P$ and $f$ version in $b$ to compare their behaviour (return
+    values, system calls, \dots),
+    considering the same arguments are passed to the two versions of $f$. 
+
+    To be confident in our decision procedure we have to do $i$ a large number
+    of possible arguments, to get a high probability to find potentially distinguishing
+    traces.
+
+    The main issue concerns the values given as parameters to $f$. When these arguments
+    are built-in types, our approach can give us good results. Unfortunately,
+    most functions use complex structures, it seems difficult in this case to
     generate values to match a correct behaviour.
 	
 	\subsubsection{Compare symbols function}
 	
-    Based on the same intuition than the previous one, now we only want to
-    execute the function $f$ with arguments set to $0$ for basics type, and
-    NULL otherwise. Hence, we fix the issue of the previous one, but we cannot
-    analyse the execution traces, we just check if the program can be
-    executed. More details are given in Section~\ref{section:libraryChecker}.
+    Following this intuition and taking into account its limitation, we will
+    only check if the two libraries can call the same function prototypes,
+    this is answered by the compilation step.
+    Hence, the idea would be to build a program calling function $f$ with
+    arguments set to $0$ or NULL and to try compiling this program with the
+    yet unknown library. We only check a small subset of the previously explained
+    issue. More details are given in Section~\ref{section:libraryChecker}.
 
 \section{Library version identifier}
 \label{section:libraryChecker}
-
-    \ludo{Pour toutes les parties qui suivent je pense qu'il faut en discuter
-    un peu :)}
 
     This section describes the approach that we investigated. This method
     tries to distinguish the library version by analysing whether a patch adds
