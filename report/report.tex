@@ -48,88 +48,44 @@ Some pedestrian approaches that are time consuming exist, but there are ineffici
 
 
    \section{Identify library version}
-	This section defines the problem, and describe our approaches to solve the problem.
-
-   \ludo{We define a library as a tuple containing, the name of the
-   library, the library version, the source code of the library, and binaries
-   compiled from the source code.}
-
-   \ludo{Hence, we define our database as a set of libraries. We want to decide if a
-   binary library is corresponding to an entry of our database.}
-
-   \ludo{More formally, let $\mathcal{D} = \{ L_1, \cdots, L_n\}$ a set of libraries, where
-   $L_i = (n_i, v_i, s_i, \mathcal{B}_i)$ ($1 \le i \le n$), $n_i$ the name of the library,
-   $v_i$ the version, $s_i$ the source code and $\mathcal{B}_i$ a finite set of
-   binary representations of the library regarding to architectures.}
-
-   \ludo{We want to find a function $V$ such that $V(P,\mathcal{D}) = (n_i,
-   v_i)$, for any binary code $P$ of a library named $n$ at the version $v$. }
    
-   \thom{Let $\mathcal{D}$ a database of binaries representing different version of libraries containing $n$ tuples such that:
-    \[ \mathcal{D} = \{ (N_i, v_i, s_i, b_i) \}_{\{i \in \{1 \dots n\}\}}  \]
-    where $N_i$ is the library name, $v_i$ the library version, $s_i$ the source
-    code of the library, and $b_i$ is the binary compiled from the source code
-    $s_i$.}
 
-    \thom{Let $L$ be a binary code of a library. We want to find a function
-    $V(L,D)$ such that if $L$ is compiled from a source code $C$ and $(N, V,
-    C, \_) \in \mathcal{D}$ then $V(L,D)$ returns $(N,V)$.}
 
-%    \subsection{Manual method to look for a library version.}
+   We define a library as a $4$-tuple containing, the name of the
+   library, the library version, the source code of the library, and binaries
+   compiled from the source code. Hence, we define our database as a set of libraries. We want to decide if an unknown binary library is corresponding to an entry of our database.
+
+   More formally, let $\mathcal{D} = \{ L_1, \cdots, L_n\}$ be a set of libraries, where
+   $L_i = (n_i, v_i, s_i, \mathcal{B}_i)$ ($1 \le i \le n$), with $n_i$ the name of the library,
+   $v_i$ the version, $s_i$ the source code and $\mathcal{B}_i$ a finite set of
+   binary representations of the library regarding to architectures.
+
+  We want to find a function $V$ such that $V(P,\mathcal{D}) = (n_i,
+   v_i)$, for any binary code $P$ of a library named $n$ being at the version $v$. 
+   
+
 	\subsection{Pedestrian approach}
     
-        One way to find the version of a library binary consists in a
-        pedestrian approach. 
-        Analysing the symbols or the strings of the binary we can find what is
-        the version of the library. For example, in OpenSSL executing the
-        ``strings'' command of Linux, outputs the version: ``OpenSSL 1.0.2g  1
-        Mar 2016''. 
+	One way to find the version of a library binary consists in a pedestrian approach. Analysing the symbols or the strings of the binary we can find what is the version of the library. For example, executing the ``strings'' command of Linux on the openSSL binary, outputs the version: ``OpenSSL 1.0.2g  1 Mar 2016''. Include the version of the library in the binary does not seem to be a standard practice.
 
-        \ludo{This technique can work if developers of the library apply a
-        convention saying that the string containing informations about the
-        version of the library must be in the data field of the library. But
-        it is obviously not a convention yet.}
+%This technique can work if developers of the library applies a convention saying that the string containing informations about the version of the library must be in the data field of the library. But it is obviously not a convention yet.
 
-        \ludo{For instance}, this technique does not work for the library zlib. 
-        \thom{Include the version of the library in the binary does not seem
-        to be a standard practice.}
-        Applying this pedestrian approach is time consuming, and totally
-        inefficient for a large-scale analysis, for example a system using
-        thousands of libraries. \ludo{Therefore, it is mandatory to consider a
-        more automated approach.}
-
-%THOMAS : Pas interessant je pense
-%    Looking for symbols in the file. 
-%    Hypothesis: It returns the calls to the libs.
-%    Issue, it does not really help to get the version.
-%    Looking for version info function in the symbols of the file. Would
-%   probably work for zlib if we understood how this function works.
-%  Example: In the Good..apk, a library calls or includes the function zlibVersion statically. This function returns the version number, but we were not able to retrieve it in the binary code of the function.
-    
-    %THOMAS : Qu'est ce qu'on veut dire par la ?
-    %Semantically checking last pushed versions of functions seems to be an    interesting approach, we may have a look at it later.
+	For instance, this technique does not work for the library Zlib. Applying this pedestrian approach is time consuming, and totally inefficient for a large-scale analysis, for example a system using thousands of libraries. 
 
     \subsection{Naive approach: Compare bitwise binaries }
     \label{naive-notations}
 
-    \ludo{We recall that a library $L$ is defined as a tuple $(n, v, c,
-    \mathcal{B})$. We could test for each library $L_i$ in $\mathcal{D}$ if $P \in
-    \mathcal{B}_i$.} 
+   We recall that a library $L$ is defined as a $4$-tuple $(n, v, c, \mathcal{B})$. We could test for each library $L_i$ in $\mathcal{D}$ if $P \in
+    \mathcal{B}_i$.
 
-    \ludo{It is not likely that we have a strict syntactic equivalence between
-    $P$ and a $b \in \mathcal{B}_i$ since the form of the binary $P$ not only
-    depends of $P$ targeted architecture, but it also depends of the compiler,
-    its version, compilation options, etc\dots}
+    It is not likely that we have a strict syntactic equivalence between
+    $P$ and a $b \in \mathcal{B}_i$ since the content of the binary $P$ not only depends of $P$ targeted architecture, but it also depends of the compiler,
+    its version, compilation options, etc. Binaries are identical if and only if all these features have the same value during the compilation. Therefore this technique does not work.
 
-    \ludo{After some tests, the strict equality gives us a probability of
-    finding the version of a library close to $0$.}
 
-    \ludo{Hence, we try to soften the comparison of those binaries and pick
-    the more similar to $P$ to decide, i.e. the one with the more syntactic
-    similarities. We did not get good results either.}
+Hence, we try to soften the comparison of those binaries and pick the more similar to $P$ to decide, i.e. the one with the more syntactic similarities. We did not get good results either.
 
-    \ludo{We conclude that the syntactic modifications brought by the compilation steps
-    are critical. And we cannot base our analysis on syntactic comparison.}
+   We conclude that the syntactic modifications brought by the compilation steps are critical. And we cannot base our analysis on syntactic comparison.
 
     % One may expect that these differences are not as important as the differences brought by the patch on the source code.
 
