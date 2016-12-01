@@ -46,11 +46,8 @@ Some pedestrian approaches that are time consuming exist, but there are ineffici
     approaches, the second section details the approaches that we investigated, and the last section presents the selected method and the results of our prototype implementing the method.
     
 
-
    \section{Identify library version}
    
-
-
    We define a library as a $4$-tuple containing, the name of the
    library, the library version, the source code of the library, and binaries
    compiled from the source code. Hence, we define our database as a set of libraries. We want to decide if an unknown binary library is corresponding to an entry of our database.
@@ -87,27 +84,21 @@ Hence, we try to soften the comparison of those binaries and pick the more simil
 
    We conclude that the syntactic modifications brought by the compilation steps are critical. And we cannot base our analysis on syntactic comparison.
 
-    % One may expect that these differences are not as important as the differences brought by the patch on the source code.
-
-%    We could simply try if there exists $(N, V, C, B) \in  \mathcal{D}$ such that $L = B$. A key point of this approach is that for a given source code, there exists a lot of binaries depending of the compilation target, the compiler and its version, and the compilation options. One may expect that these differences are not as important as the differences brought by the patch on the source code.
-%
-    %Unfortunately after some tests, looking at the symbol and the assembly code, we concluded that it seems impossible to distinguish whether the difference between two binaries come from the source code or from the compiler options or other stuffs describe previously.
     
-    \ludo{Obviously, it is not possible to consider $\mathcal{B}$ such that it
+ Obviously, it is not possible to consider $\mathcal{B}$ such that it
     would capture all possible compilation of the source code. Without
     considering that this set would be infinite, its size would grow in a way
-    that it would not be reasonable anymore to consider a comparison algorithm.}
-    %One idea was to generate all the possible binaries from a library source code. It implies to compile the source code for all the compilation target, all the compiler and all their version, and all the different compilation option. It seems to be impossible in practice.
+    that it would not be reasonable anymore to consider a comparison algorithm.
 
-    \ludo{A question must be considered: Is compilation modification of a
+A question must be considered: Is compilation modification of a
     binary are distinguishable of patch modification of this binary ?
-    Answering this question is essential to consider this problem.}
+    Answering this question is essential to consider this problem.
 
-    \ludo{We would like to believe that it is the case since we do not
+We would like to believe that it is the case since we do not
     consider any kind of patch, indeed we want to distinguish versions of a
     library to know if a security patch has been applied. A more general way
     to view a patch would have made us answer no to this question, but a
-    security patch should semantically change what a program can do.}
+    security patch should semantically change what a program can do.
 
     \subsection{Smarter approach: Signature function}\label{approach-sign}
 
