@@ -258,30 +258,31 @@ Some pedestrian approaches that are time consuming exist, but there are ineffici
     or removes a constant, and whether a patch adds, removes, or modifies a
     function of the library.
 	   
-    Different major versions have different signature functions. For example,
-    it exists one function $f$ from OpenSSL 1.1.* that does not exist in
-    OpenSSL 1.0.*. As a consequence, it is possible to eliminate a lot of
-    versions of OpenSSL for an unknown library $L$ by checking the existence
-    of this function $f$. If $f$ exists, then the OpenSSL version cannot be
-    lower than 1.1.*. The limitation of this idea is that different minor
-    versions as OpenSSL 1.0.2.h and OpenSSL 1.0.2.j own the same functions and
-    constants.
+    Different major versions have different functions prototypes. For example,
+    it can exist a function $f$ from OpenSSL 1.1.* that does not exist in
+    OpenSSL 1.0.*. As a consequence, it is possible to discriminate a
+    consequent number of OpenSSL versions comparing to an unknown library $L$ by checking the existence
+    of this function. If $f$ prototype matches a function prototype in $L$,
+    and it does not match OpenSSL 1.0.* but matches OpenSSL 1.1.* then with
+    high probability $L$ would be a version of OpenSSL which could not be
+    lower than 1.1.*. A limitation would be that different minor
+    versions as OpenSSL 1.0.2.h and OpenSSL 1.0.2.j define the same functions
+    prototypes and we would not be able to distinguish them.
    
-    Based on this idea we set up a program that automatically detect the version of an
+    Based on this idea we wrote a program that automatically detect the version of an
     unknown library. We start this section with an overview of the program, then
     some details about the program are given and some results and improvements are
     presented.
 
 	\subsection{Overview of the method}
    
-    We own several source codes of different libraries, with different
-    versions for each library. Compiling these sources codes we obtain
-    different .so files for each library version.  For each library version,
-    using the header files, we extract the constants and functions proposed by
-    the library and we generate a C program main.c using these functions.
-    Compiling this main.c we obtain a binary program $P$ that we link with the
-    .so file.
-
+    We built a database based on several source codes of different libraries,
+    with different versions for each library. Compiling these sources codes we
+    obtain different .so files for each library version. For each library
+    version, using the header files, we extract the constants and functions
+    proposed by the library and we generate a C program main.c using these
+    functions.  Compiling this main.c we obtain a binary program $P$ that we
+    link with the .so file.
 
     Let lib.so be a .so file coming from an unknown library version. To
     identify its version we replace in each library version that we own the
@@ -343,18 +344,22 @@ Some pedestrian approaches that are time consuming exist, but there are ineffici
             \item zlib 1.1.3- can distinguish.
         \end{itemize}
 
-
-   	
         We need to test our program with more libraries and version. The main
         issues are the ones mentioned in each subsection, compiling
         automatically more .so and extract more functions from each library.
 
     
     \section{Conclusion}
-    To adapt
-    these techniques to static libraries, we need to find a way to extract the
-    library from the binary using it statically (that is far away from a
-    trivial task). 
+    We manage to provide a tool that answer to the problem for some instance
+    of library binaries. But it is still insufficient to automate a decision
+    procedure to determine the version of a library. Many points we discussed
+    in this report would provide a more precise way to answer this problem.
+    Especially working on CFG recovery, we could analyse the semantic of a
+    specific function. We also need to consider the case when the library is
+    statically linked to a program. To adapt these techniques to static
+    libraries, we would like to find a way to extract the library from the binary
+    using it statically, to also analyse functions of the library
+    independently, which seems not to be a trivial task. 
     
 
 \iffalse    
