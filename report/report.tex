@@ -35,7 +35,7 @@ Some pedestrian approaches that are time consuming exist, but there are ineffici
 
 	Using libraries to develop a program is both less time-consuming and more secure. These libraries can be OpenSSL to secure communications, or Zlib to compress data, etc. As a consequence, hackers are more prone to find vulnerabilities in these libraries to get a wider impact. Those libraries are thus subject to security checks and patches to prevent the exploitation of vulnerabilities. 
      
-     There are at least two cases where vulnerable libraries are used requiring a library version identifier. End-users of these libraries, i.e. applications developers, do not always update their programs as soon as patches are published.It can be due to compatibility problems or because it is too complicated to update the system (e.g. embedded systems). \ludo{Some proprietary programs that are shadowy using those libraries we do not know which version has been used.}
+     There are at least two cases where vulnerable libraries are used requiring a library version identifier. End-users of these libraries, i.e. applications developers, do not always update their programs as soon as patches are published.It can be due to compatibility problems or because it is too complicated to update the system (e.g. embedded systems). Some proprietary programs that are shadowy using those libraries we do not know which version has been used.
      
 	Distinguishing versions of libraries used in a program is necessary to be confident in the security of an application. To do so, some pedestrian approaches exist, but they are time consuming, and totally inefficient in a large scale analysis. A system can embed thousands of libraries, an automatic process is therefore needed to identify the version of a library.
     
@@ -102,16 +102,15 @@ We would like to believe that it is the case since we do not
 
     \subsection{Smarter approach: Signature function}\label{approach-sign}
 
-    \ludo{We shown previously that we cannot syntactically compare binaries.
-    Therefore we will try other methods that try to consider patterns of our
-    binaries.} Hence, a more efficient way to decide $V(L,D)$ consists in
+We shown previously that we cannot syntactically compare binaries.
+    Therefore we will try other methods that consider patterns of our
+    binaries. Hence, a more efficient way to decide $V(L,D)$ consists in
     applying a $\signature$ function such that $\signature(L) = \signature(B)$
     if $L$ and $B$ version is the same but they are not necessarily
     compiled with the same options or on the same architecture.
 	
     One idea was to use the same kind of functions that the ones used for malware, e.g.
-    based on simplified control flow graph. Due to a lack of time we have yet 
-    to investigate this idea in details. The intuition would be that this
+    based on simplified control flow graph. Due to a lack of time we have not yet investigate this idea in details. The intuition would be that this
     approach will not be as efficient as we would except since here we look
     for a different property that we look for in a malware. 
     
@@ -119,9 +118,7 @@ We would like to believe that it is the case since we do not
     detect poly-morphing malwares, probably occult differences introduced by
     security patches. Hence, we would not distinguish successfully the version
     of a library.
-%    Since a patch does not necessarily change a lot of code, differences
-%    between two versions may not be more important than differences between
-%    two different compilers, or optimisations.
+
 	
 	\subsection{Analysis of functions behaviour}
 	
@@ -142,14 +139,12 @@ We would like to believe that it is the case since we do not
 	In this approach we assume that if a patch is applied on a library $L$ to
     update a library version $V_1$ to $V_2$ then there exists at least one
     function $f \in L$ in $V_2$ in which its behaviour change compared to
-    $V_1$. If not, the patch purpose would not be to fix a security issue, and
-    would not be considered in the first place. 
-    As a consequence, the comparison is reduced to the function level rather than
-    the library level. We expect that it leads to a simplification of the
+    $V_1$. If not, the patch purpose would not to be to fix a security issue, and  would not to be considered in the first place. 
+    As a consequence, the comparison is reduced to the function level rather than the library level. We expect that it leads to a simplification of the
     problem.
 	
 	
-  We considered Several methods to compare functions:
+  We considered several methods to compare functions:
 	\begin{itemize}
 		\item Compare Control Flow Graph or simplified Control Flow Graph as
             in malware detection methods,
@@ -159,10 +154,7 @@ We would like to believe that it is the case since we do not
             important modifications on the function.
 	\end{itemize}
 	
-	\subsubsection{Compare CFG}
-	
-    \ludo{Est-ce que l'on garde cette partie du coup ?}
-	The idea is to construct a control flow graph for each function of the library, and to compare them. As said previously, we have not experimented it yet.
+
 	
 	
 	\subsubsection{Compare traces}
@@ -179,8 +171,7 @@ We would like to believe that it is the case since we do not
     considering the same arguments are passed to the two versions of $f$. 
 
     To be confident in our decision procedure we have to do $i$ a large number
-    of possible arguments, to get a high probability to find potentially distinguishing
-    traces.
+    of possible arguments, to get a high probability to find potentially distinguishing traces.
 
     The main issue concerns the values given as parameters to $f$. When these arguments
     are built-in types, our approach can give us good results. Unfortunately,
@@ -249,7 +240,7 @@ We would like to believe that it is the case since we do not
     of all the libraries to generate the .so files. We have written a Perl
     script to achieve it.
 	
-    \textbf{Issues} Oldest version of libraries cannot be compiled with the
+    \textbf{Issues: } Oldest version of libraries cannot be compiled with the
     same compiler, nor the same dependencies as the newest versions. It seems
     to be infeasible to compile all the version of the library on one single
     non-adapted operating system. The question is how can we set up an
@@ -262,7 +253,7 @@ We would like to believe that it is the case since we do not
     the header files of the library sources. Using cscan we are able to
     extract a part of the functions.
    	
-    \textbf{Issues} In some libraries there are a lot of macros, and most part
+    \textbf{Issues: } In some libraries there are a lot of macros, and most part
     of tools available to extract the functions are not working perfectly when
     there are macros.   		
    	
@@ -297,17 +288,14 @@ We would like to believe that it is the case since we do not
 
     
     \section{Conclusion}
-    We manage to provide a tool that answer to the problem for some instance
+    We manage to provide a tool that answer to the problem for some instances
     of library binaries. But it is still insufficient to automate a decision
     procedure to determine the version of a library. Many points we discussed
     in this report would provide a more precise way to answer this problem.
     Especially working on CFG recovery, we could analyse the semantic of a
-    specific function. We also need to consider the case when the library is
-    statically linked to a program. To adapt these techniques to static
-    libraries, we would like to find a way to extract the library from the binary
-    using it statically, to also analyse functions of the library
-    independently, which seems not to be a trivial task. 
-    
+    specific function.
+     We also need to adapt these techniques to static libraries, we would like to find a way to extract the library from the binary, to also analyse functions of the library independently, which seems not to be a trivial task. 
+
 
 \iffalse    
     \subsection{Other tools}
